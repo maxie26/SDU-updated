@@ -124,22 +124,31 @@ $user_data['created_at'] = $user_data['created_at'] ?? '';
             margin-bottom: 20px;
         }
         .back-link a {
-            color: #6c757d;
+            color: #1a237e;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            transition: color 0.3s ease;
+            gap: 8px;
+            border: 1px solid #1a237e;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
         }
-        .back-link a:hover {
-            color: #495057;
-        }
+        .back-link a:hover { background-color: #1a237e; color: #ffffff; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="back-link">
-            <a href="staff_dashboard.php">
+            <?php
+            $backHref = 'staff_dashboard.php';
+            if ($_SESSION['role'] === 'admin') {
+                $backHref = 'admin_dashboard.php';
+            } elseif ($_SESSION['role'] === 'head') {
+                $backHref = 'office_head_dashboard.php';
+            }
+            ?>
+            <a href="<?php echo $backHref; ?>">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
@@ -161,18 +170,12 @@ $user_data['created_at'] = $user_data['created_at'] ?? '';
                     <div class="info-value"><?php echo htmlspecialchars($user_data['email']); ?></div>
                 </div>
 
+                <?php if ($_SESSION['role'] !== 'admin'): ?>
                 <div class="info-row">
                     <div class="info-label">
                         <i class="fas fa-briefcase me-2"></i>Position
                     </div>
                     <div class="info-value"><?php echo htmlspecialchars($user_data['position']); ?></div>
-                </div>
-
-                <div class="info-row">
-                    <div class="info-label">
-                        <i class="fas fa-graduation-cap me-2"></i>Program
-                    </div>
-                    <div class="info-value"><?php echo htmlspecialchars($user_data['program']); ?></div>
                 </div>
 
                 <div class="info-row">
@@ -188,6 +191,7 @@ $user_data['created_at'] = $user_data['created_at'] ?? '';
                     </div>
                     <div class="info-value"><?php echo htmlspecialchars($user_data['office']); ?></div>
                 </div>
+                <?php endif; ?>
 
                 <div class="info-row">
                     <div class="info-label">

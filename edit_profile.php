@@ -13,17 +13,24 @@ $error_message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
-    $position = $_POST['position'];
-    $program = $_POST['program'];
-    $job_function = $_POST['job_function'];
-    $office = $_POST['office'];
+    $position = isset($_POST['position']) ? $_POST['position'] : '';
+    $program = isset($_POST['program']) ? $_POST['program'] : '';
+    $job_function = isset($_POST['job_function']) ? $_POST['job_function'] : '';
+    $office = isset($_POST['office']) ? $_POST['office'] : '';
+    $new_password = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
 
     $conn->begin_transaction();
 
     try {
         
-        $stmt_user = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
-        $stmt_user->bind_param("si", $email, $user_id);
+        if (!empty($new_password)) {
+            $hashed = password_hash($new_password, PASSWORD_DEFAULT);
+            $stmt_user = $conn->prepare("UPDATE users SET email = ?, password = ? WHERE id = ?");
+            $stmt_user->bind_param("ssi", $email, $hashed, $user_id);
+        } else {
+            $stmt_user = $conn->prepare("UPDATE users SET email = ? WHERE id = ?");
+            $stmt_user->bind_param("si", $email, $user_id);
+        }
         if (!$stmt_user->execute()) {
             throw new Exception("Error updating user information: " . $stmt_user->error);
         }
@@ -118,13 +125,10 @@ $user_data['office'] = $user_data['office'] ?? '';
                     <label for="email" class="form-label">Email</label>
                     <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user_data['email']); ?>" required>
                 </div>
+                <?php if ($_SESSION['role'] !== 'admin'): ?>
                 <div class="mb-3">
                     <label for="position" class="form-label">Position</label>
                     <input type="text" class="form-control" id="position" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>">
-                </div>
-                <div class="mb-3">
-                    <label for="program" class="form-label">Program</label>
-                    <input type="text" class="form-control" id="program" name="program" value="<?php echo htmlspecialchars($user_data['program']); ?>">
                 </div>
                 <div class="mb-3">
                     <label for="job_function" class="form-label">Job Function</label>
@@ -132,14 +136,43 @@ $user_data['office'] = $user_data['office'] ?? '';
                 </div>
                 <div class="mb-3">
                     <label for="office" class="form-label">Office</label>
-                    <input type="text" class="form-control" id="office" name="office" value="<?php echo htmlspecialchars($user_data['office']); ?>">
+                    <select class="form-control" id="office" name="office">
+                        <option value="">Select your office</option>
+                        <?php
+                        $offices = [
+                            'Ateneo Center for Culture & the Arts (ACCA)',
+                            'Ateneo Center for Environment & Sustainability (ACES)',
+                            'Ateneo Center for Leadership & Governance (ACLG)',
+                            'Ateneo Peace Institute (API)',
+                            'Center for Community Extension Services (CCES)',
+                            'Ateneo Learning and Teaching Excellence Center (ALTEC)'
+                        ];
+                        foreach ($offices as $opt) {
+                            $sel = ($user_data['office'] === $opt) ? 'selected' : '';
+                            echo '<option value="'.htmlspecialchars($opt).'" '.$sel.'>'.htmlspecialchars($opt).'</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+                <div class="mb-3">
+                    <label for="new_password" class="form-label">New Password (optional)</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Leave blank to keep current password">
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Update Profile</button>
             </form>
 
             <div class="text-center mt-3">
                 <a href="view_profile.php" class="btn btn-outline-secondary me-2">View Profile</a>
-                <a href="staff_dashboard.php" class="btn btn-outline-primary">Go back to Dashboard</a>
+                <?php
+                $backHref = 'staff_dashboard.php';
+                if ($_SESSION['role'] === 'admin') {
+                    $backHref = 'admin_dashboard.php';
+                } elseif ($_SESSION['role'] === 'head') {
+                    $backHref = 'office_head_dashboard.php';
+                }
+                ?>
+                <a href="<?php echo $backHref; ?>" class="btn btn-outline-primary">Go back to Dashboard</a>
             </div>
         </div>
     </div>

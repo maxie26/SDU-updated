@@ -84,7 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="submit" class="btn btn-primary w-100">Add Training</button>
             </form>
             <div class="text-center mt-3">
-                <a href="staff_dashboard.php?view=training-records">Go back to Training Records</a>
+                <?php $backHref = ($_SESSION['role']==='head') ? 'office_head_dashboard.php?view=overview' : 'staff_dashboard.php?view=training-records'; ?>
+                <a href="<?php echo $backHref; ?>">Go back to Dashboard</a>
             </div>
         </div>
     </div>

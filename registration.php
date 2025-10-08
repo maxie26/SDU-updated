@@ -11,9 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $username = trim($_POST['username']);
         $email = trim($_POST['email']);
         $password = $_POST['password'];
+        $office = isset($_POST['office']) ? trim($_POST['office']) : '';
 
         if (empty($role) || empty($username) || empty($email) || empty($password)) {
             $error = "All fields are required.";
+        } elseif (in_array($role, ['staff','head']) && empty($office)) {
+            $error = "Please select your office.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Invalid email format.";
         } else {
@@ -34,6 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($stmt_insert) {
                     $stmt_insert->bind_param("ssss", $username, $email, $hashed_password, $role);
                     if ($stmt_insert->execute()) {
+                        $new_user_id = $stmt_insert->insert_id;
+                        if (in_array($role, ['staff','head'])) {
+                            $stmt_sd = $conn->prepare("INSERT INTO staff_details (user_id, office) VALUES (?, ?)");
+                            $stmt_sd->bind_param("is", $new_user_id, $office);
+                            $stmt_sd->execute();
+                            $stmt_sd->close();
+                        }
                         $_SESSION['registration_success'] = "Registration successful! You can now sign in.";
                         header("Location: login.php");
                         exit();
@@ -310,6 +320,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <input type="text" id="username" name="username" placeholder="Type your username" required>
                         </div>
                     </div>
+                    <div class="form-group" id="office-group" style="display:none;">
+                        <label for="office">OFFICE</label>
+                        <select id="office" name="office">
+                            <option value="">Select your office</option>
+                            <option value="Ateneo Center for Culture & the Arts (ACCA)">Ateneo Center for Culture & the Arts (ACCA)</option>
+                            <option value="Ateneo Center for Environment & Sustainability (ACES)">Ateneo Center for Environment & Sustainability (ACES)</option>
+                            <option value="Ateneo Center for Leadership & Governance (ACLG)">Ateneo Center for Leadership & Governance (ACLG)</option>
+                            <option value="Ateneo Peace Institute (API)">Ateneo Peace Institute (API)</option>
+                            <option value="Center for Community Extension Services (CCES)">Center for Community Extension Services (CCES)</option>
+                            <option value="Ateneo Learning and Teaching Excellence Center (ALTEC)">Ateneo Learning and Teaching Excellence Center (ALTEC)</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="email">EMAIL</label>
                         <div class="input-with-icon">
@@ -340,5 +362,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <h1>SOCIAL DEVELOPMENT UNIT</h1>
         </div>
     </div>
+<script>
+    const adminRadio = document.getElementById('admin');
+    const staffRadio = document.getElementById('staff');
+    const headRadio = document.getElementById('head');
+    const officeGroup = document.getElementById('office-group');
+    function toggleOffice() {
+        if (staffRadio.checked || headRadio.checked) {
+            officeGroup.style.display = '';
+        } else {
+            officeGroup.style.display = 'none';
+        }
+    }
+    [adminRadio, staffRadio, headRadio].forEach(r => r.addEventListener('change', toggleOffice));
+    toggleOffice();
+ </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 session_start();
 include("db.php");
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin' || !isset($_GET['id'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin','head']) || !isset($_GET['id'])) {
     header("Location: login.php");
     exit();
 }
@@ -22,6 +22,32 @@ if (!$user_data) {
 }
 
 $staff_username = $user_data['username'];
+
+// If viewer is a head, enforce same office restriction
+if ($_SESSION['role'] === 'head') {
+    $head_id = $_SESSION['user_id'];
+    $head_office = '';
+    $staff_office = '';
+    $stmt = $conn->prepare("SELECT office FROM staff_details WHERE user_id = ?");
+    $stmt->bind_param("i", $head_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) { $head_office = $row['office'] ?? ''; }
+    $stmt->close();
+
+    $stmt = $conn->prepare("SELECT office FROM staff_details WHERE user_id = ?");
+    $stmt->bind_param("i", $staff_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) { $staff_office = $row['office'] ?? ''; }
+    $stmt->close();
+
+    if (empty($head_office) || $head_office !== $staff_office) {
+        http_response_code(403);
+        echo "You are not authorized to view this staff member's trainings.";
+        exit();
+    }
+}
 
 $query_records = "SELECT t.title, ut.completion_date FROM user_trainings ut JOIN trainings t ON ut.training_id = t.id WHERE ut.user_id = ?";
 $stmt_records = $conn->prepare($query_records);
@@ -50,8 +76,9 @@ $stmt_records->close();
         <div class="card">
             <h2 class="text-center mb-4">Training Records for **<?php echo htmlspecialchars($staff_username); ?>**</h2>
             <div class="d-flex justify-content-end mb-3">
-                <a href="staff_directory_view.php" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Staff Directory
+                <?php $back = ($_SESSION['role']==='admin') ? 'staff_directory_view.php' : 'office_head_dashboard.php?view=office-directory'; ?>
+                <a href="<?php echo $back; ?>" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back
                 </a>
             </div>
 

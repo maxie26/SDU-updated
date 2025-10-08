@@ -28,10 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($user['role'] === 'admin') {
                     header("Location: admin_dashboard.php");
                     exit();
-                } else if ($user['role'] === 'staff' || $user['role'] === 'head') {
+                } else if ($user['role'] === 'staff') {
                     header("Location: staff_dashboard.php");
                     exit();
-                }else {
+                } else if ($user['role'] === 'head') {
+                    header("Location: office_head_dashboard.php");
+                    exit();
+                } else {
                     $error = "Invalid email or password!";
                 }
             } else {

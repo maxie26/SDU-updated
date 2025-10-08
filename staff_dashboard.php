@@ -103,10 +103,20 @@ if ($view === 'training-records') {
             display: flex;
             background-color: #f0f2f5;
         }
+        @media (min-width: 992px) {
+            body.toggled .sidebar { width: 80px; }
+            body.toggled .main-content { margin-left: 80px; }
+            .sidebar .nav-link { transition: all 0.2s; white-space: nowrap; overflow: hidden; }
+            body.toggled .sidebar .nav-link { text-align: center; padding: 12px 0; }
+            body.toggled .sidebar .nav-link i { margin-right: 0; }
+            body.toggled .sidebar .nav-link span { display: none; }
+            body.toggled .sidebar h3 { display: none; }
+        }
         .main-content {
             flex-grow: 1;
             padding: 2rem;
             margin-left: 250px; 
+            transition: margin-left 0.3s ease-in-out;
         }
         .sidebar {
             width: 250px;
@@ -115,6 +125,7 @@ if ($view === 'training-records') {
             height: 100vh;
             position: fixed;
             padding-top: 2rem;
+            transition: width 0.3s ease-in-out;
         }
         .sidebar .nav-link {
             color: white;
@@ -132,6 +143,15 @@ if ($view === 'training-records') {
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             padding: 1.5rem;
         }
+        /* Transparent sidebar toggle like admin */
+        .sidebar .btn-toggle {
+            background-color: transparent;
+            border: none;
+            color: #ffffff;
+            padding: 6px 10px;
+        }
+        .sidebar .btn-toggle:focus { box-shadow: none; }
+        .sidebar .btn-toggle:hover { background-color: transparent; }
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -148,7 +168,8 @@ if ($view === 'training-records') {
         .card h3 {
             margin: 0 0 0.5rem;
             color: #1a237e;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            font-weight: 700;
         }
         .card p {
             font-size: 2.5rem;
@@ -202,34 +223,37 @@ if ($view === 'training-records') {
         }
     </style>
 </head>
-<body>
+<body id="body">
 
     <div class="sidebar">
-        <h3 class="text-center mb-4">Staff Dashboard</h3>
+        <div class="d-flex justify-content-between align-items-center px-3 mb-3">
+            <h3 class="m-0"><?= $_SESSION['role'] === 'head' ? 'Office Head Dashboard' : 'Staff Dashboard' ?></h3>
+            <button id="sidebar-toggle" class="btn btn-toggle"><i class="fas fa-bars"></i></button>
+        </div>
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link <?= $view === 'overview' ? 'active' : '' ?>" href="?view=overview">
-                    <i class="fas fa-chart-line me-2"></i>Dashboard
+                    <i class="fas fa-chart-line me-2"></i> <span>Dashboard</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link <?= $view === 'training-records' ? 'active' : '' ?>" href="?view=training-records">
-                    <i class="fas fa-book-open me-2"></i>Training Records
+                    <i class="fas fa-book-open me-2"></i> <span>Training Records</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="view_profile.php">
-                    <i class="fas fa-user me-2"></i>View Profile
+                    <i class="fas fa-user me-2"></i> <span>View Profile</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="edit_profile.php">
-                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                    <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
                 </a>
             </li>
             <li class="nav-item mt-auto">
                 <a class="nav-link" href="logout.php">
-                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
                 </a>
             </li>
         </ul>
@@ -391,5 +415,16 @@ if ($view === 'training-records') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            var btn = document.getElementById('sidebar-toggle');
+            if (btn) {
+                btn.addEventListener('click', function(){
+                    var b = document.getElementById('body') || document.body;
+                    b.classList.toggle('toggled');
+                });
+            }
+        });
+    </script>
 </body>
 </html>

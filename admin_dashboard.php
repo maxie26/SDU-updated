@@ -12,11 +12,19 @@ $admin_username = $_SESSION['username'];
 
 
 $total_staff = 0;
+$total_heads = 0;
 $trainings_completed = 0;
 $active_programs = 0;
 
 $query_total_staff = "SELECT COUNT(*) AS total FROM users WHERE role IN ('staff', 'head')";
 $result_total_staff = $conn->query($query_total_staff);
+// total heads
+$query_total_heads = "SELECT COUNT(*) AS total FROM users WHERE role = 'head'";
+$result_total_heads = $conn->query($query_total_heads);
+if ($result_total_heads) {
+    $row = $result_total_heads->fetch_assoc();
+    $total_heads = $row['total'];
+}
 if ($result_total_staff) {
     $row = $result_total_staff->fetch_assoc();
     $total_staff = $row['total'];
@@ -34,7 +42,7 @@ if ($conn->query("SHOW TABLES LIKE 'trainings'")->num_rows == 1) {
 
 
 // This is also a placeholder for now
-$active_programs = 3; // Example static value
+$active_programs = 0;
 ?>
 
 <!DOCTYPE html>
@@ -131,6 +139,9 @@ $active_programs = 3; // Example static value
         transition: opacity 0.3s ease-in-out;
     }
 
+    .sidebar-lg .nav-link { color: #ffffff; }
+    .offcanvas .nav-link { color: #ffffff; }
+
     body.toggled .sidebar-lg .sidebar-header h5 {
         display: none; 
     }
@@ -211,7 +222,7 @@ $active_programs = 3; // Example static value
 </head>
 <body id="body">
 
-    <div class="offcanvas offcanvas-start bg-dark text-white d-lg-none" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+        <div class="offcanvas offcanvas-start bg-dark text-white d-lg-none" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="offcanvasNavbarLabel">SDU Admin</h5>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -222,13 +233,13 @@ $active_programs = 3; // Example static value
                     <a class="nav-link <?= $view === 'overview' ? 'active' : '' ?>" href="?view=overview">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= $view === 'staff-directory' ? 'active' : '' ?>" href="?view=staff-directory">Staff Directory</a>
+                    <a class="nav-link" href="staff_report.php">Directory & Reports</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= $view === 'training-records' ? 'active' : '' ?>" href="?view=training-records">Training Records</a>
+                    <a class="nav-link" href="view_profile.php">View Profile</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= $view === 'reports' ? 'active' : '' ?>" href="?view=reports">Reports</a>
+                    <a class="nav-link" href="edit_profile.php">Edit Profile</a>
                 </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link" href="logout.php">Logout</a>
@@ -260,18 +271,18 @@ $active_programs = 3; // Example static value
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="staff_directory_view.php">
-                    <i class="fas fa-users me-2"></i> <span>Staff Directory</span>
+                <a class="nav-link" href="staff_report.php">
+                    <i class="fas fa-users me-2"></i> <span>Directory & Reports</span>
                 </a>
             </li>
             <li class="nav-item">
-        <a class="nav-link" href="staff_report.php">
-            <i class="fas fa-file-alt me-2"></i> <span>Staff Report</span>
-        </a>
-    </li>
+                <a class="nav-link" href="view_profile.php">
+                    <i class="fas fa-user me-2"></i> <span>View Profile</span>
+                </a>
+            </li>
             <li class="nav-item">
-                <a class="nav-link <?= $view === 'reports' ? 'active' : '' ?>" href="?view=reports">
-                    <i class="fas fa-chart-bar"></i> <span>Reports</span>
+                <a class="nav-link" href="edit_profile.php">
+                    <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
                 </a>
             </li>
             <li class="nav-item mt-auto">
@@ -299,12 +310,12 @@ $active_programs = 3; // Example static value
                     <p><?php echo $total_staff; ?></p>
                 </div>
                 <div class="card">
-                    <h3>Trainings Completed</h3>
-                    <p><?php echo $trainings_completed; ?></p>
+                    <h3>Total Heads</h3>
+                    <p><?php echo $total_heads; ?></p>
                 </div>
                 <div class="card">
-                    <h3>Active Programs</h3>
-                    <p><?php echo $active_programs; ?></p>
+                    <h3>Trainings Completed</h3>
+                    <p><?php echo $trainings_completed; ?></p>
                 </div>
             </div>
             <div class="content-box">
@@ -349,11 +360,6 @@ $active_programs = 3; // Example static value
             <div class="content-box">
                 <h2>Training Records</h2>
                 <p>This section will show a list of trainings and the staff who attended them. </p>
-            </div>
-        <?php elseif ($view === 'reports'): ?>
-            <div class="content-box">
-                <h2>Bi-Yearly Summary Reports</h2>
-                <p>This section will generate and display summary reports on training participation and competencies. </p>
             </div>
         <?php endif; ?>
     </div>
