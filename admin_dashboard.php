@@ -31,12 +31,13 @@ if ($result_total_staff) {
 }
 
 
+// Fixed: Only count trainings with status = 'completed'
 if ($conn->query("SHOW TABLES LIKE 'trainings'")->num_rows == 1) {
-    $query_trainings = "SELECT COUNT(*) AS total FROM trainings";
+    $query_trainings = "SELECT COUNT(*) AS total FROM user_trainings WHERE status = 'completed'";
     $result_trainings = $conn->query($query_trainings);
     if ($result_trainings) {     
         $row = $result_trainings->fetch_assoc();
-     $trainings_completed = $row['total'];
+        $trainings_completed = $row['total'];
     }
 }
 
@@ -112,43 +113,26 @@ $active_programs = 0;
         margin-left: 80px; 
     }
 
-    .sidebar-lg .sidebar-toggle-btn {
-        background-color: transparent;
-        border: none;
-        color: white; 
-        font-size: 1.5rem;
-        padding: 10px;
-        width: 100%;
-        text-align: right; 
-    }
 
-    .sidebar-lg .sidebar-header {
-        padding: 0 15px; 
-        height: 60px; 
-        display: flex;
-        color: white; 
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 2rem; 
-    }
 
-    .sidebar-lg .sidebar-header h5 {
-        font-weight: bold;
-        color: white;
-        margin: 0;
-        transition: opacity 0.3s ease-in-out;
+    .sidebar-lg .nav-link { 
+        color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 5px;
+        margin: 5px 15px;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        overflow: hidden;
     }
-
-    .sidebar-lg .nav-link { color: #ffffff; }
+    
+    .sidebar-lg .nav-link:hover, .sidebar-lg .nav-link.active {
+        background-color: #3f51b5;
+    }
+    
     .offcanvas .nav-link { color: #ffffff; }
 
-    body.toggled .sidebar-lg .sidebar-header h5 {
+    body.toggled .sidebar-lg h5 {
         display: none; 
-    }
-
-    body.toggled .sidebar-lg .sidebar-toggle-btn {
-        text-align: center; 
-        padding: 10px 0; 
     }
 
     body.toggled .main-content {
@@ -160,6 +144,21 @@ $active_programs = 0;
         display: none !important; 
     }
 
+    /* Match staff/head sidebar toggle button style */
+    .sidebar-lg .btn-toggle {
+        background-color: transparent;
+        border: none;
+        color: #ffffff;
+        padding: 6px 10px;
+    }
+    
+    .sidebar-lg .btn-toggle:focus { 
+        box-shadow: none; 
+    }
+    
+    .sidebar-lg .btn-toggle:hover { 
+        background-color: transparent; 
+    }
 
     .stats-cards {
         display: flex;
@@ -222,7 +221,7 @@ $active_programs = 0;
 </head>
 <body id="body">
 
-        <div class="offcanvas offcanvas-start bg-dark text-white d-lg-none" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+    <div class="offcanvas offcanvas-start bg-dark text-white d-lg-none" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="offcanvasNavbarLabel">SDU Admin</h5>
             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -248,15 +247,10 @@ $active_programs = 0;
         </div>
     </div>
 
-
    <div class="sidebar-lg d-none d-lg-block">
-        <div class="sidebar-header d-flex justify-content-between align-items-center mb-4">
-            <h5 class="ms-3 me-auto text-white">SDU Admin</h5> 
-            <button id="sidebar-toggle" class="btn btn-dark sidebar-toggle-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                </svg>
-            </button>
+        <div class="d-flex justify-content-between align-items-center px-3 mb-3">
+            <h5 class="m-0 text-white">SDU Admin</h5>
+            <button id="sidebar-toggle" class="btn btn-toggle"><i class="fas fa-bars"></i></button>
         </div>
         
         <div class="profile-pic text-center mb-4">
@@ -267,7 +261,7 @@ $active_programs = 0;
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link <?= $view === 'overview' ? 'active' : '' ?>" href="?view=overview">
-                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                    <i class="fas fa-chart-line me-2"></i> <span>Dashboard</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -287,7 +281,7 @@ $active_programs = 0;
             </li>
             <li class="nav-item mt-auto">
                 <a class="nav-link" href="logout.php">
-                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                    <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
                 </a>
             </li>
         </ul>
