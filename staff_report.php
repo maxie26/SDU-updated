@@ -79,37 +79,37 @@ if (!empty($selected_offices)) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Montserrat', sans-serif; display: flex; background-color: #f0f2f5; }
-        .main-content { flex-grow: 1; padding: 2rem; transition: margin-left 0.3s ease-in-out; }
-        @media (min-width: 992px) { .main-content { margin-left: 250px; } }
-        .sidebar { width: 250px; background-color: #1a237e; color: white; height: 100vh; position: fixed; padding-top: 2rem; transition: width 0.3s ease-in-out; }
-        .sidebar .nav-link { color: white; padding: 12px 20px; border-radius: 5px; margin: 5px 15px; transition: background-color 0.2s; white-space: nowrap; overflow: hidden; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #3f51b5; }
-        .sidebar .btn-toggle { background: transparent; border: none; color: #fff; padding: 6px 10px; }
-        @media (min-width: 992px) { body.toggled .sidebar { width: 80px; } body.toggled .main-content { margin-left: 80px; } body.toggled .sidebar .nav-link span { display: none; } }
-        .content-box { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 1.5rem; }
-        .table-responsive { overflow-x: auto; }
-        .back-link { margin-bottom: 20px; }
+        body { 
+            font-family: 'Montserrat', sans-serif;
+            background-color: #07106eff; 
+        }
+        .container { 
+            max-width: 1400px; 
+            margin-top: 50px; 
+        }
+        .card { 
+            padding: 20px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+        }
+        .table-responsive { 
+            overflow-x: auto; 
+        }
+        .back-link { 
+            margin-bottom: 20px; 
+        }
     </style>
 </head>
-<body id="body">
-    <div class="sidebar">
-        <div class="d-flex justify-content-between align-items-center px-3 mb-3">
-            <h3 class="m-0">Admin Dashboard</h3>
-            <button id="sidebar-toggle" class="btn btn-toggle"><i class="fas fa-bars"></i></button>
-        </div>
-        <ul class="nav flex-column">
-            <li class="nav-item"><a class="nav-link" href="admin_dashboard.php?view=overview"><i class="fas fa-chart-line me-2"></i> <span>Dashboard</span></a></li>
-            <li class="nav-item"><a class="nav-link active" href="staff_report.php"><i class="fas fa-users me-2"></i> <span>Directory & Reports</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="view_profile.php"><i class="fas fa-user me-2"></i> <span>View Profile</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="edit_profile.php"><i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span></a></li>
-            <li class="nav-item mt-auto"><a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span></a></li>
-        </ul>
-    </div>
+<body>
 
-    <div class="main-content">
-        <div class="content-box">
-            <h2 class="mb-4">Staff/Head Directory & Bi-Yearly Report</h2>
+<div class="container">
+    <div class="card">
+        <nav class="back-link">
+            <a href="admin_dashboard.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Go back to Dashboard
+            </a>
+        </nav>
+        
+        <h2 class="text-center mb-4">Staff/Head Directory & Bi-Yearly Report</h2>
         
         <form class="row gy-2 gx-3 align-items-center mb-3" method="get" action="staff_report.php" id="filtersForm">
             <div class="col-auto">
@@ -159,7 +159,7 @@ if (!empty($selected_offices)) {
             </div>
         </form>
 
-        <div class="table-responsive mt-3">
+        <div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
@@ -191,14 +191,12 @@ if (!empty($selected_offices)) {
                 </tbody>
             </table>
         </div>
-        </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
     (function(){
-        var btn = document.getElementById('sidebar-toggle');
-        if (btn) { btn.addEventListener('click', function(){ var b = document.getElementById('body') || document.body; b.classList.toggle('toggled'); }); }
         const form = document.getElementById('filtersForm');
         const allBox = document.getElementById('office-all');
         const officeChecks = Array.from(document.querySelectorAll('.office-check'));
@@ -243,6 +241,6 @@ if (!empty($selected_offices)) {
         syncAllState();
         updateButtonLabel();
     })();
-    </script>
+</script>
 </body>
 </html>
