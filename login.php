@@ -70,6 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         align-items: center;
         min-height: 100vh;
         background-color: #f0f2f5;
+        background-image: url(sma-cover-1024x576.jpg);
+        background-size: cover;
+
     }
 
     .login-container {

@@ -95,7 +95,7 @@ $user_data['office'] = $user_data['office'] ?? '';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { 
-            background-color: #f0f2f5; 
+            background-color: #07106eff;
             font-family: 'Montserrat', sans-serif; 
         }
         .container { 
