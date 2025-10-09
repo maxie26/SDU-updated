@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Montserrat', sans-serif; background-color: #f0f2f5; }
+        body { font-family: 'Montserrat', sans-serif; background-color: #ffffffff; }
         .container { max-width: 600px; margin-top: 50px; }
         .card { padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     </style>

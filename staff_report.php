@@ -81,7 +81,7 @@ if (!empty($selected_offices)) {
     <style>
         body { 
             font-family: 'Montserrat', sans-serif;
-            background-color: #07106eff; 
+            background-color: #ffffffff; 
         }
         .container { 
             max-width: 1400px; 

@@ -48,7 +48,7 @@ $user_data['created_at'] = $user_data['created_at'] ?? '';
     <style>
         body { 
             font-family: 'Montserrat', sans-serif; 
-            background-color: #07106eff;
+            background-color: #ffffffff;
         }
         .container { 
             max-width: 800px; 
