@@ -94,24 +94,49 @@ $user_data['office'] = $user_data['office'] ?? '';
     <title>Edit Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { 
-            background-color: #07106eff;
-            font-family: 'Montserrat', sans-serif; 
-        }
-        .container { 
-            max-width: 600px; 
-            margin-top: 50px; 
-        }
-        .card { 
-            padding: 20px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
-        }
+        body { font-family: 'Montserrat', sans-serif; display: flex; background-color: #f0f2f5; }
+        .main-content { flex-grow: 1; padding: 2rem; transition: margin-left 0.3s ease-in-out; }
+        @media (min-width: 992px) { .main-content { margin-left: 250px; } }
+        .sidebar { width: 250px; background-color: #1a237e; color: white; height: 100vh; position: fixed; padding-top: 2rem; transition: width 0.3s ease-in-out; }
+        .sidebar .nav-link { color: white; padding: 12px 20px; border-radius: 5px; margin: 5px 15px; transition: background-color 0.2s; white-space: nowrap; overflow: hidden; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #3f51b5; }
+        .sidebar .btn-toggle { background: transparent; border: none; color: #fff; padding: 6px 10px; }
+        @media (min-width: 992px) { body.toggled .sidebar { width: 80px; } body.toggled .main-content { margin-left: 80px; } body.toggled .sidebar .nav-link span { display: none; } }
+        .content-box { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 1.5rem; max-width: 700px; margin: 0 auto; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <h2 class="text-center mb-4">Edit Profile</h2>
+<body id="body">
+    <div class="sidebar">
+        <div class="d-flex justify-content-between align-items-center px-3 mb-3">
+            <h3 class="m-0"><?= $_SESSION['role'] === 'head' ? 'Office Head Dashboard' : ($_SESSION['role'] === 'admin' ? 'Admin Dashboard' : 'Staff Dashboard') ?></h3>
+            <button id="sidebar-toggle" class="btn btn-toggle"><i class="fas fa-bars"></i></button>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <?php if ($_SESSION['role'] === 'admin'): ?>
+                    <a class="nav-link" href="admin_dashboard.php?view=overview"><i class="fas fa-chart-line me-2"></i> <span>Dashboard</span></a>
+                <?php elseif ($_SESSION['role'] === 'head'): ?>
+                    <a class="nav-link" href="office_head_dashboard.php?view=overview"><i class="fas fa-chart-line me-2"></i> <span>Dashboard</span></a>
+                <?php else: ?>
+                    <a class="nav-link" href="staff_dashboard.php?view=overview"><i class="fas fa-chart-line me-2"></i> <span>Dashboard</span></a>
+                <?php endif; ?>
+            </li>
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+            <li class="nav-item"><a class="nav-link" href="staff_report.php"><i class="fas fa-users me-2"></i> <span>Directory & Reports</span></a></li>
+            <?php elseif ($_SESSION['role'] === 'head'): ?>
+            <li class="nav-item"><a class="nav-link" href="office_head_dashboard.php?view=office-directory"><i class="fas fa-users me-2"></i> <span>Office Directory</span></a></li>
+            <?php else: ?>
+            <li class="nav-item"><a class="nav-link" href="staff_dashboard.php?view=training-records"><i class="fas fa-book-open me-2"></i> <span>Training Records</span></a></li>
+            <?php endif; ?>
+            <li class="nav-item"><a class="nav-link" href="view_profile.php"><i class="fas fa-user me-2"></i> <span>View Profile</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="edit_profile.php"><i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span></a></li>
+            <li class="nav-item mt-auto"><a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-box">
+            <h2 class="mb-4">Edit Profile</h2>
 
             <?php if (!empty($success_message)): ?>
                 <div class="alert alert-success"><?php echo $success_message; ?></div>
@@ -166,15 +191,19 @@ $user_data['office'] = $user_data['office'] ?? '';
                 <a href="view_profile.php" class="btn btn-outline-secondary me-2">View Profile</a>
                 <?php
                 $backHref = 'staff_dashboard.php';
-                if ($_SESSION['role'] === 'admin') {
-                    $backHref = 'admin_dashboard.php';
-                } elseif ($_SESSION['role'] === 'head') {
-                    $backHref = 'office_head_dashboard.php';
-                }
+                if ($_SESSION['role'] === 'admin') { $backHref = 'admin_dashboard.php'; }
+                elseif ($_SESSION['role'] === 'head') { $backHref = 'office_head_dashboard.php'; }
                 ?>
                 <a href="<?php echo $backHref; ?>" class="btn btn-outline-primary">Go back to Dashboard</a>
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            var btn = document.getElementById('sidebar-toggle');
+            if (btn) { btn.addEventListener('click', function(){ var b = document.getElementById('body') || document.body; b.classList.toggle('toggled'); }); }
+        });
+    </script>
 </body>
 </html>
