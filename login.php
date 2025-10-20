@@ -72,6 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         background-color: #f0f2f5;
         background-image: url(sma-cover-1024x576.jpg);
         background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
 
     }
 

@@ -55,7 +55,13 @@ $active_programs = 0;
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body { font-family: 'Montserrat', sans-serif; display: flex; background-color: #f7f9fc; transition: margin-left 0.3s ease-in-out; }
+    body { 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; 
+        display: flex; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-attachment: fixed;
+        transition: margin-left 0.3s ease-in-out; 
+    }
 
     .main-content { flex-grow: 1; padding: 2rem; transition: margin-left 0.3s ease-in-out; }
 
@@ -158,53 +164,172 @@ $active_programs = 0;
         margin-bottom: 2rem;
     }
 
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 1rem;
+            margin-left: 0 !important;
+        }
+        
+        .stats-cards {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .card {
+            padding: 1.5rem 1rem;
+        }
+        
+        .card p {
+            font-size: 2rem;
+        }
+        
+        .content-box {
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .main-content {
+            padding: 0.5rem;
+        }
+        
+        .card {
+            padding: 1rem;
+        }
+        
+        .content-box {
+            padding: 1rem;
+        }
+        
+        .header h1 {
+            font-size: 1.25rem;
+        }
+    }
+
     .card {
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        padding: 2rem 1.5rem;
         text-align: center;
-        border: 1px solid #eef0f6;
+        border: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--card-color), var(--card-color-light));
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
     }
 
     .card h3 {
-        margin: 0 0 0.5rem;
-        color: #0d47a1;
-        font-size: 0.95rem;
+        margin: 0 0 1rem;
+        color: var(--card-color);
+        font-size: 0.9rem;
         text-transform: uppercase;
-        letter-spacing: .5px;
+        letter-spacing: 1px;
+        font-weight: 600;
     }
 
     .card p {
-        font-size: 2.25rem;
-        font-weight: 800;
+        font-size: 2.5rem;
+        font-weight: 900;
         margin: 0;
+        color: var(--card-color);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .card:nth-child(1) { border-top: 4px solid #2962ff; }
-    .card:nth-child(2) { border-top: 4px solid #00c853; }
-    .card:nth-child(3) { border-top: 4px solid #ff6d00; }
+    .card:nth-child(1) { 
+        --card-color: #6366f1;
+        --card-color-light: #a5b4fc;
+    }
+    .card:nth-child(2) { 
+        --card-color: #10b981;
+        --card-color-light: #6ee7b7;
+    }
+    .card:nth-child(3) { 
+        --card-color: #f59e0b;
+        --card-color-light: #fbbf24;
+    }
 
     .content-box {
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .content-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
     }
 
     .content-box h2 {
         margin-top: 0;
-        color: #0d47a1;
-        border-bottom: 2px solid #e3f2fd;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
+        color: #1e293b;
+        border-bottom: 3px solid #e2e8f0;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        font-weight: 700;
+        font-size: 1.5rem;
     }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    table { 
+        width: 100%; 
+        border-collapse: separate; 
+        border-spacing: 0;
+        margin-top: 1.5rem;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
 
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #edf2f7; }
+    th, td { 
+        text-align: left; 
+        padding: 16px 20px; 
+        border-bottom: 1px solid #f1f5f9; 
+    }
 
-    th { background-color: #f7fbff; color: #0d47a1; font-weight: 700; }
+    th { 
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+        color: #475569; 
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    tr:hover td {
+        background-color: #f8fafc;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
 </style>
 </head>
 <body id="body">
@@ -283,8 +408,9 @@ $active_programs = 0;
         </button>
 
         <?php if ($view === 'overview'): ?>
-            <div class="header">
-                <h1>Welcome, <?php echo htmlspecialchars($admin_username); ?>!</h1>
+            <div class="header mb-4">
+                <h1 class="text-white fw-bold mb-2">Welcome back, <?php echo htmlspecialchars($admin_username); ?>!</h1>
+                <p class="text-white-50 mb-0">Here's what's happening with your organization today.</p>
             </div>
             <div class="stats-cards">
                 <div class="card">

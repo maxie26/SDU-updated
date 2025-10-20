@@ -99,9 +99,10 @@ if ($view === 'training-records') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             display: flex;
-            background-color: #f0f2f5;
+            background: white;
+            background-attachment: fixed;
         }
         @media (min-width: 992px) {
             body.toggled .sidebar { width: 80px; }
@@ -137,7 +138,19 @@ if ($view === 'training-records') {
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
             background-color: #3f51b5;
         }
-        .content-box { background-color: #fff; border-radius: 12px; box-shadow: 0 6px 14px rgba(0,0,0,0.08); padding: 1.5rem; border: 1px solid #eef0f6; }
+        .content-box { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+            padding: 2rem; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .content-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
         /* Transparent sidebar toggle like admin */
         .sidebar .btn-toggle {
             background-color: transparent;
@@ -153,30 +166,117 @@ if ($view === 'training-records') {
             gap: 1rem;
             margin-bottom: 2rem;
         }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+                margin-left: 0 !important;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem 1rem;
+            }
+            
+            .card p {
+                font-size: 2rem;
+            }
+            
+            .content-box {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .content-box {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
         .card {
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            padding: 2rem 1.5rem;
             text-align: center;
-            border: 1px solid #eef0f6;
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--card-color), var(--card-color-light));
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
         }
         .card h3 {
-            margin: 0 0 0.5rem;
-            color: #0d47a1;
-            font-size: 0.95rem;
-            font-weight: 800;
+            margin: 0 0 1rem;
+            color: var(--card-color);
+            font-size: 0.9rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: .5px;
+            letter-spacing: 1px;
         }
         .card p {
-            font-size: 2.25rem;
-            font-weight: 800;
-            color: #263238;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--card-color);
             margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .stats-cards .card:nth-child(1) { border-top: 4px solid #00c853; }
-        .stats-cards .card:nth-child(2) { border-top: 4px solid #ff6d00; }
+        .stats-cards .card:nth-child(1) { 
+            --card-color: #10b981;
+            --card-color-light: #6ee7b7;
+        }
+        .stats-cards .card:nth-child(2) { 
+            --card-color: #f59e0b;
+            --card-color-light: #fbbf24;
+        }
         .quick-actions {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -242,12 +342,12 @@ if ($view === 'training-records') {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="view_profile.php">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
                     <i class="fas fa-user me-2"></i> <span>View Profile</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="edit_profile.php">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                     <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
                 </a>
             </li>
@@ -261,9 +361,9 @@ if ($view === 'training-records') {
 
     <div class="main-content">
         <?php if ($view === 'overview'): ?>
-            <div class="header">
-                <h1>Welcome, <?php echo htmlspecialchars($staff_username); ?>!</h1>
-                <p>Here you can view your personal overview and progress.</p>
+            <div class="header mb-4">
+                <h1 class="text-dark fw-bold mb-2">Welcome back, <?php echo htmlspecialchars($staff_username); ?>!</h1>
+                <p class="text-white-50 mb-0">Manage your training records and track your progress.</p>
             </div>
             
             <div class="stats-cards">
@@ -284,19 +384,15 @@ if ($view === 'training-records') {
                     <h4>Add Training</h4>
                     <p>Record a new training</p>
                 </div>
-                <div class="action-card">
-                    <a href="view_profile.php">
-                        <i class="fas fa-user"></i>
-                        <h4>View Profile</h4>
-                        <p>Check your information</p>
-                    </a>
+                <div class="action-card" data-bs-toggle="modal" data-bs-target="#viewProfileModal" style="cursor:pointer;">
+                    <i class="fas fa-user"></i>
+                    <h4>View Profile</h4>
+                    <p>Check your information</p>
                 </div>
-                <div class="action-card">
-                    <a href="?view=training-records">
-                        <i class="fas fa-book-open"></i>
-                        <h4>Training Records</h4>
-                        <p>Manage your trainings</p>
-                    </a>
+                <div class="action-card" data-bs-toggle="modal" data-bs-target="#trainingRecordsModal" style="cursor:pointer;">
+                    <i class="fas fa-book-open"></i>
+                    <h4>Training Records</h4>
+                    <p>Manage your trainings</p>
                 </div>
             </div>
 
@@ -573,7 +669,122 @@ if ($view === 'training-records') {
                         });
                 });
             }
+
+            // View Profile Modal
+            const viewProfileModal = document.getElementById('viewProfileModal');
+            if (viewProfileModal) {
+                viewProfileModal.addEventListener('show.bs.modal', function () {
+                    // Load profile data via AJAX
+                    fetch('view_profile_api.php', { credentials: 'same-origin' })
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('profileContent').innerHTML = data;
+                        })
+                        .catch(error => {
+                            document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Failed to load profile data</div>';
+                        });
+                });
+            }
+
+            // Edit Profile Modal
+            const editProfileModal = document.getElementById('editProfileModal');
+            if (editProfileModal) {
+                editProfileModal.addEventListener('show.bs.modal', function () {
+                    // Load edit form via AJAX
+                    fetch('edit_profile_api.php', { credentials: 'same-origin' })
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('editProfileContent').innerHTML = data;
+                        })
+                        .catch(error => {
+                            document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load edit form</div>';
+                        });
+                });
+            }
+
+            // Training Records Modal
+            const trainingRecordsModal = document.getElementById('trainingRecordsModal');
+            if (trainingRecordsModal) {
+                trainingRecordsModal.addEventListener('show.bs.modal', function () {
+                    // Load training records via AJAX
+                    fetch('training_records_api.php', { credentials: 'same-origin' })
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('trainingRecordsContent').innerHTML = data;
+                        })
+                        .catch(error => {
+                            document.getElementById('trainingRecordsContent').innerHTML = '<div class="alert alert-danger">Failed to load training records</div>';
+                        });
+                });
+            }
         });
     </script>
+
+    <!-- View Profile Modal -->
+    <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-labelledby="viewProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewProfileModalLabel">View Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="profileContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editProfileContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Records Modal -->
+    <div class="modal fade" id="trainingRecordsModal" tabindex="-1" aria-labelledby="trainingRecordsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="trainingRecordsModalLabel">Training Records</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="trainingRecordsContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

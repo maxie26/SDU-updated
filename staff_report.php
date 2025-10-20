@@ -80,22 +80,135 @@ if (!empty($selected_offices)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { 
-            font-family: 'Montserrat', sans-serif;
-            background-color: #ffffffff; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
         }
         .container { 
             max-width: 1400px; 
-            margin-top: 50px; 
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
         .card { 
-            padding: 20px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .table-responsive { 
             overflow-x: auto; 
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .back-link { 
-            margin-bottom: 20px; 
+            margin-bottom: 2rem; 
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        .form-select, .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .table thead th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #475569;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .badge {
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .form {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .col-auto {
+                width: 100%;
+            }
+            
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 0.5rem auto;
+                padding: 0 0.25rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.75rem;
+            }
+            
+            .dropdown-menu {
+                min-width: 280px;
+            }
         }
     </style>
 </head>
@@ -109,7 +222,8 @@ if (!empty($selected_offices)) {
             </a>
         </nav>
         
-        <h2 class="text-center mb-4">Staff/Head Directory & Bi-Yearly Report</h2>
+        <h2 class="text-center mb-4 text-dark fw-bold">Staff/Head Directory & Bi-Yearly Report</h2>
+        <p class="text-center text-muted mb-4">Filter and view staff information with training records</p>
         
         <form class="row gy-2 gx-3 align-items-center mb-3" method="get" action="staff_report.php" id="filtersForm">
             <div class="col-auto">
