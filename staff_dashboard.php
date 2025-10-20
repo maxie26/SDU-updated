@@ -137,12 +137,7 @@ if ($view === 'training-records') {
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
             background-color: #3f51b5;
         }
-        .content-box {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-        }
+        .content-box { background-color: #fff; border-radius: 12px; box-shadow: 0 6px 14px rgba(0,0,0,0.08); padding: 1.5rem; border: 1px solid #eef0f6; }
         /* Transparent sidebar toggle like admin */
         .sidebar .btn-toggle {
             background-color: transparent;
@@ -160,23 +155,28 @@ if ($view === 'training-records') {
         }
         .card {
             background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+            padding: 1.25rem 1.5rem;
             text-align: center;
+            border: 1px solid #eef0f6;
         }
         .card h3 {
             margin: 0 0 0.5rem;
-            color: #1a237e;
-            font-size: 1rem;
-            font-weight: 700;
+            color: #0d47a1;
+            font-size: 0.95rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .5px;
         }
         .card p {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #333;
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #263238;
             margin: 0;
         }
+        .stats-cards .card:nth-child(1) { border-top: 4px solid #00c853; }
+        .stats-cards .card:nth-child(2) { border-top: 4px solid #ff6d00; }
         .quick-actions {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -279,12 +279,10 @@ if ($view === 'training-records') {
 
     
             <div class="quick-actions">
-                <div class="action-card">
-                    <a href="add_training.php">
-                        <i class="fas fa-plus-circle"></i>
-                        <h4>Add Training</h4>
-                        <p>Record a new training</p>
-                    </a>
+                <div class="action-card" data-bs-toggle="modal" data-bs-target="#addTrainingModal" style="cursor:pointer;">
+                    <i class="fas fa-plus-circle"></i>
+                    <h4>Add Training</h4>
+                    <p>Record a new training</p>
                 </div>
                 <div class="action-card">
                     <a href="view_profile.php">
@@ -322,7 +320,7 @@ if ($view === 'training-records') {
 
             <div class="content-box mt-4">
                 <h2>Recent Activity</h2>
-                <?php if ($result_activities && $result_activities->num_rows > 0): ?>
+            <?php if ($result_activities && $result_activities->num_rows > 0): ?>
                     <div class="list-group">
                         <?php while ($activity = $result_activities->fetch_assoc()): ?>
                             <div class="list-group-item d-flex justify-content-between align-items-center">
@@ -347,9 +345,9 @@ if ($view === 'training-records') {
                         <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">No Training Activities Yet</h5>
                         <p class="text-muted">Start by adding your first training record!</p>
-                        <a href="add_training.php" class="btn btn-primary">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrainingModal">
                             <i class="fas fa-plus-circle me-1"></i> Add Your First Training
-                        </a>
+                        </button>
                     </div>
                 <?php endif; ?>
             </div>
@@ -357,9 +355,9 @@ if ($view === 'training-records') {
     <div class="content-box">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>My Training Records</h2>
-            <a href="add_training.php" class="btn btn-primary">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrainingModal">
                 <i class="fas fa-plus-circle me-1"></i> Add Training
-            </a>
+            </button>
         </div>
         <?php echo $message; ?>
         <?php if ($result_records && $result_records->num_rows > 0): ?>
@@ -391,9 +389,13 @@ if ($view === 'training-records') {
                                             <i class="fas fa-check"></i> Mark Completed
                                         </a>
                                     <?php endif; ?>
-                                    <a href="edit_training.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm">
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTrainingModal"
+                                        data-training-id="<?php echo $row['id']; ?>"
+                                        data-title="<?php echo htmlspecialchars($row['title']); ?>"
+                                        data-date="<?php echo htmlspecialchars($row['completion_date']); ?>"
+                                        data-status="<?php echo htmlspecialchars($row['status']); ?>">
                                         <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                    </button>
                                     <a href="delete_training.php?id=<?php echo $row['id']; ?>" 
                                        class="btn btn-danger btn-sm" 
                                        onclick="return confirm('Are you sure you want to delete this training record?')">
@@ -422,6 +424,153 @@ if ($view === 'training-records') {
                 btn.addEventListener('click', function(){
                     var b = document.getElementById('body') || document.body;
                     b.classList.toggle('toggled');
+                });
+            }
+            // Build Add Training Modal dynamically
+            var addModalEl = document.createElement('div');
+            addModalEl.className = 'modal fade';
+            addModalEl.id = 'addTrainingModal';
+            addModalEl.tabIndex = -1;
+            addModalEl.innerHTML = '\
+        <div class="modal-dialog">\
+          <div class="modal-content">\
+            <div class="modal-header">\
+              <h5 class="modal-title">Add Training</h5>\
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>\
+            </div>\
+            <form id="addTrainingForm">\
+              <div class="modal-body">\
+                <div class="mb-3">\
+                  <label class="form-label">Training Title</label>\
+                  <input type="text" name="title" class="form-control" required />\
+                </div>\
+                <div class="mb-3">\
+                  <label class="form-label">Description</label>\
+                  <textarea name="description" class="form-control" rows="3"></textarea>\
+                </div>\
+                <div class="mb-3">\
+                  <label class="form-label">Date</label>\
+                  <input type="date" name="completion_date" class="form-control" required />\
+                </div>\
+                <div class="mb-3">\
+                  <label class="form-label">Status</label>\
+                  <select name="status" class="form-control" required>\
+                    <option value="completed">Completed</option>\
+                    <option value="upcoming">Upcoming</option>\
+                  </select>\
+                </div>\
+                <div id="addTrainingFeedback"></div>\
+              </div>\
+              <div class="modal-footer">\
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>\
+                <button type="submit" class="btn btn-primary">Save</button>\
+              </div>\
+            </form>\
+          </div>\
+        </div>';
+            document.body.appendChild(addModalEl);
+
+            // Build Edit Training Modal dynamically
+            var editModalEl = document.createElement('div');
+            editModalEl.className = 'modal fade';
+            editModalEl.id = 'editTrainingModal';
+            editModalEl.tabIndex = -1;
+            editModalEl.innerHTML = '\
+        <div class="modal-dialog">\
+          <div class="modal-content">\
+            <div class="modal-header">\
+              <h5 class="modal-title">Edit Training</h5>\
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>\
+            </div>\
+            <form id="editTrainingForm">\
+              <div class="modal-body">\
+                <input type="hidden" name="id" />\
+                <div class="mb-3">\
+                  <label class="form-label">Training Title</label>\
+                  <input type="text" name="title" class="form-control" required />\
+                </div>\
+                <div class="mb-3">\
+                  <label class="form-label">Description</label>\
+                  <textarea name="description" class="form-control" rows="3"></textarea>\
+                </div>\
+                <div class="mb-3">\
+                  <label class="form-label">Date</label>\
+                  <input type="date" name="completion_date" class="form-control" required />\
+                </div>\
+                <div class="mb-3">\
+                  <label class="form-label">Status</label>\
+                  <select name="status" class="form-control" required>\
+                    <option value="completed">Completed</option>\
+                    <option value="upcoming">Upcoming</option>\
+                  </select>\
+                </div>\
+                <div id="editTrainingFeedback"></div>\
+              </div>\
+              <div class="modal-footer">\
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>\
+                <button type="submit" class="btn btn-primary">Update</button>\
+              </div>\
+            </form>\
+          </div>\
+        </div>';
+            document.body.appendChild(editModalEl);
+
+            var editTrainingModal = document.getElementById('editTrainingModal');
+            if (editTrainingModal) {
+                editTrainingModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    if (!button) return;
+                    var form = document.getElementById('editTrainingForm');
+                    form.elements['id'].value = button.getAttribute('data-training-id');
+                    form.elements['title'].value = button.getAttribute('data-title');
+                    form.elements['completion_date'].value = button.getAttribute('data-date');
+                    form.elements['status'].value = button.getAttribute('data-status');
+                });
+            }
+
+            var addForm = document.getElementById('addTrainingForm');
+            if (addForm) {
+                addForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    var fd = new FormData(addForm);
+                    fetch('training_api.php?action=create', { method: 'POST', body: fd, credentials: 'same-origin' })
+                        .then(function(r){ return r.json(); })
+                        .then(function(data){
+                            var fb = document.getElementById('addTrainingFeedback');
+                            if (data.success) {
+                                fb.innerHTML = '<div class="alert alert-success">Training added!</div>';
+                                setTimeout(function(){ window.location.reload(); }, 600);
+                            } else {
+                                fb.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed') + '</div>';
+                            }
+                        })
+                        .catch(function(){
+                            var fb = document.getElementById('addTrainingFeedback');
+                            fb.innerHTML = '<div class="alert alert-danger">Request failed</div>';
+                        });
+                });
+            }
+
+            var editForm = document.getElementById('editTrainingForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    var fd = new FormData(editForm);
+                    fetch('training_api.php?action=update', { method: 'POST', body: fd, credentials: 'same-origin' })
+                        .then(function(r){ return r.json(); })
+                        .then(function(data){
+                            var fb = document.getElementById('editTrainingFeedback');
+                            if (data.success) {
+                                fb.innerHTML = '<div class="alert alert-success">Training updated!</div>';
+                                setTimeout(function(){ window.location.reload(); }, 600);
+                            } else {
+                                fb.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed') + '</div>';
+                            }
+                        })
+                        .catch(function(){
+                            var fb = document.getElementById('editTrainingFeedback');
+                            fb.innerHTML = '<div class="alert alert-danger">Request failed</div>';
+                        });
                 });
             }
         });

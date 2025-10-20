@@ -18,6 +18,30 @@ SET FOREIGN_KEY_CHECKS = 0;
 --
 -- Database: `sdu_system`
 --
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `offices`
+-- Centralized list of offices for dynamic selection
+--
+
+CREATE TABLE IF NOT EXISTS `offices` (
+  `id` int(6) UNSIGNED NOT NULL,
+  `name` varchar(150) NOT NULL,
+  `code` varchar(20) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Sample offices
+INSERT INTO `offices` (`id`, `name`, `code`, `is_active`) VALUES
+(1, 'Ateneo Center for Culture & the Arts (ACCA)', 'ACCA', 1),
+(2, 'Ateneo Center for Environment & Sustainability (ACES)', 'ACES', 1),
+(3, 'Ateneo Center for Leadership & Governance (ACLG)', 'ACLG', 1),
+(4, 'Ateneo Peace Institute (API)', 'API', 1),
+(5, 'Center for Community Extension Services (CCES)', 'CCES', 1),
+(6, 'Ateneo Learning and Teaching Excellence Center (ALTEC)', 'ALTEC', 1);
+
 
 -- --------------------------------------------------------
 
@@ -169,6 +193,14 @@ ALTER TABLE `user_trainings`
   ADD KEY `status` (`status`);
 
 --
+-- Indexes for table `offices`
+--
+ALTER TABLE `offices`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`),
+  ADD UNIQUE KEY `code` (`code`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -195,6 +227,12 @@ ALTER TABLE `trainings`
 --
 ALTER TABLE `user_trainings`
   MODIFY `id` int(6) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `offices`
+--
+ALTER TABLE `offices`
+  MODIFY `id` int(6) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables

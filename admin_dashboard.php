@@ -55,18 +55,9 @@ $active_programs = 0;
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body {
-        font-family: 'Montserrat', sans-serif;
-        display: flex;
-        background-color: #f0f2f5;
-        transition: margin-left 0.3s ease-in-out;
-    }
+    body { font-family: 'Montserrat', sans-serif; display: flex; background-color: #f7f9fc; transition: margin-left 0.3s ease-in-out; }
 
-    .main-content {
-        flex-grow: 1;
-        padding: 2rem;
-        transition: margin-left 0.3s ease-in-out;
-    }
+    .main-content { flex-grow: 1; padding: 2rem; transition: margin-left 0.3s ease-in-out; }
 
     @media (min-width: 992px) {
         .sidebar-lg {
@@ -161,31 +152,38 @@ $active_programs = 0;
     }
 
     .stats-cards {
-        display: flex;
-        justify-content: space-around;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 1rem;
         margin-bottom: 2rem;
     }
 
     .card {
         background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+        padding: 1.25rem 1.5rem;
         text-align: center;
-        flex-basis: 30%;
+        border: 1px solid #eef0f6;
     }
 
     .card h3 {
         margin: 0 0 0.5rem;
-        color: #1a237e;
+        color: #0d47a1;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: .5px;
     }
 
     .card p {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #333;
+        font-size: 2.25rem;
+        font-weight: 800;
+        margin: 0;
     }
+
+    .card:nth-child(1) { border-top: 4px solid #2962ff; }
+    .card:nth-child(2) { border-top: 4px solid #00c853; }
+    .card:nth-child(3) { border-top: 4px solid #ff6d00; }
 
     .content-box {
         background-color: #fff;
@@ -196,27 +194,17 @@ $active_programs = 0;
 
     .content-box h2 {
         margin-top: 0;
-        color: #1a237e;
-        border-bottom: 2px solid #1a237e;
+        color: #0d47a1;
+        border-bottom: 2px solid #e3f2fd;
         padding-bottom: 10px;
         margin-bottom: 20px;
     }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1rem;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
 
-    th, td {
-        text-align: left;
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-    }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #edf2f7; }
 
-    th {
-        background-color: #f2f2f2;
-    }
+    th { background-color: #f7fbff; color: #0d47a1; font-weight: 700; }
 </style>
 </head>
 <body id="body">
