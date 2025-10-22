@@ -80,7 +80,7 @@ if (!empty($office)) {
         }
         .sidebar .nav-link { color: white; padding: 12px 20px; border-radius: 5px; margin: 5px 15px; transition: background-color 0.2s; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #3f51b5; }
-        .content-box { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .content-box { background-color: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 1.5rem; }
         /* Transparent sidebar toggle like admin */
         .sidebar .btn-toggle { background-color: transparent; border: none; color: #ffffff; padding: 6px 10px; }
         .sidebar .btn-toggle:focus { box-shadow: none; }
@@ -94,10 +94,26 @@ if (!empty($office)) {
             body.toggled .sidebar .nav-link span { display: none; }
             body.toggled .sidebar h3 { display: none; }
         }
-        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .card { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 1.5rem; text-align: center; }
-        .card h3 { margin: 0 0 0.5rem; color: #1a237e; font-size: 1rem; font-weight: 700; }
-        .card p { font-size: 2.5rem; font-weight: bold; color: #333; margin: 0; }
+        .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: .25rem; }
+        .header p { color: #6b7280; font-size: .95rem; margin: 0; }
+
+        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { position: relative; background-color: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 1.25rem 1.25rem 1.25rem 4.25rem; text-align: left; border: 0; }
+        .card .icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.25rem; }
+        .card h3 { margin: 0 0 0.25rem; color: #111827; font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+        .card p { font-size: 2rem; font-weight: 800; color: #111827; margin: 0; }
+        .stats-cards .card:nth-child(1) .icon { background: #0ea5e9; }
+        .stats-cards .card:nth-child(2) .icon { background: #10b981; }
+
+        /* Buttons consistency */
+        .btn-primary,
+        .btn-info,
+        .btn-success { border-radius: 10px; padding: .6rem 1rem; font-weight: 600; }
+
+        /* Center modals */
+        .modal-dialog { display: flex; align-items: center; min-height: calc(100vh - 1rem); }
+        .modal-content { border-radius: 14px; }
+        .modal-header .btn-close { margin: -0.25rem -0.25rem -0.25rem auto; }
     </style>
     </head>
 <body id="body">
@@ -119,12 +135,12 @@ if (!empty($office)) {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="view_profile.php">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
                     <i class="fas fa-user me-2"></i> <span>View Profile</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="edit_profile.php">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                     <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
                 </a>
             </li>
@@ -138,16 +154,18 @@ if (!empty($office)) {
 
     <div class="main-content">
         <?php if ($view === 'overview'): ?>
-            <div class="header">
+            <div class="header mb-3">
                 <h1>Welcome, <?php echo htmlspecialchars($username); ?>!</h1>
                 <p>Your office: <strong><?php echo htmlspecialchars($office ?: 'Not set'); ?></strong></p>
             </div>
             <div class="stats-cards">
                 <div class="card">
+                    <div class="icon"><i class="fas fa-users"></i></div>
                     <h3>Staff in Your Office</h3>
                     <p><?php echo $total_staff_in_office; ?></p>
                 </div>
                 <div class="card">
+                    <div class="icon"><i class="fas fa-check-circle"></i></div>
                     <h3>Completed Trainings (Office)</h3>
                     <p><?php echo $completed_trainings_in_office; ?></p>
                 </div>
@@ -155,7 +173,7 @@ if (!empty($office)) {
             <div class="content-box">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2>Your Actions</h2>
-                    <a href="add_training.php" class="btn btn-primary"><i class="fas fa-plus-circle me-1"></i> Add Training</a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrainingModal"><i class="fas fa-plus-circle me-1"></i> Add Training</button>
                 </div>
                 <p>Use the Office Staff Directory to view and review trainings of staff in your office.</p>
             </div>
@@ -196,9 +214,9 @@ if (!empty($office)) {
                                     <td><?php echo htmlspecialchars($row['program'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($row['job_function'] ?? 'N/A'); ?></td>
                                     <td>
-                                        <a class="btn btn-sm btn-info" href="view_staff_trainings.php?id=<?php echo $row['id']; ?>">
+                                        <button type="button" class="btn btn-sm btn-info" data-view-trainings data-user-id="<?php echo $row['id']; ?>">
                                             <i class="fas fa-eye"></i> View Trainings
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -224,8 +242,186 @@ if (!empty($office)) {
                     b.classList.toggle('toggled');
                 });
             }
+
+            // Load View Profile into modal when opened
+            const viewProfileModal = document.getElementById('viewProfileModal');
+            if (viewProfileModal) {
+                viewProfileModal.addEventListener('show.bs.modal', function () {
+                    fetch('view_profile_api.php', { credentials: 'same-origin' })
+                        .then(r => r.text())
+                        .then(html => { document.getElementById('profileContent').innerHTML = html; })
+                        .catch(() => { document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Failed to load profile</div>'; });
+                });
+            }
+
+            // Load Edit Profile form into modal when opened
+            const attachSaveHandler = function() {
+                const profileForm = document.getElementById('profileForm');
+                const saveBtn = document.getElementById('saveProfileBtn');
+                if (!profileForm || !saveBtn) return;
+                const newBtn = saveBtn.cloneNode(true);
+                saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+                newBtn.addEventListener('click', function(){
+                    const formData = new FormData(profileForm);
+                    const feedback = document.getElementById('editProfileFeedback');
+                    fetch('edit_profile_api.php?action=save', { method: 'POST', body: formData, credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
+                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); window.location.reload(); }, 1000);
+                            } else {
+                                feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
+                            }
+                        })
+                        .catch(() => { feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
+                });
+            };
+
+            const editProfileModal = document.getElementById('editProfileModal');
+            if (editProfileModal) {
+                editProfileModal.addEventListener('show.bs.modal', function () {
+                    fetch('edit_profile_api.php', { credentials: 'same-origin' })
+                        .then(r => r.text())
+                        .then(html => { document.getElementById('editProfileContent').innerHTML = html; attachSaveHandler(); })
+                        .catch(() => { document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load form</div>'; });
+                });
+            }
+
+            // Staff trainings modal
+            const staffTrainingsModal = document.getElementById('staffTrainingsModal');
+            document.querySelectorAll('[data-view-trainings]')?.forEach(function(btn){
+                btn.addEventListener('click', function(){
+                    const uid = this.getAttribute('data-user-id');
+                    const body = document.getElementById('staffTrainingsContent');
+                    body.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+                    const modal = new bootstrap.Modal(staffTrainingsModal);
+                    modal.show();
+                    fetch('view_staff_trainings.php?id=' + encodeURIComponent(uid), { credentials: 'same-origin' })
+                        .then(r => r.text())
+                        .then(html => { body.innerHTML = html; })
+                        .catch(() => { body.innerHTML = '<div class="alert alert-danger">Failed to load trainings</div>'; });
+                });
+            });
+
+            // Handle Add Training form submit
+            const addForm = document.getElementById('addTrainingForm');
+            if (addForm) {
+                addForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    const fd = new FormData(addForm);
+                    fetch('training_api.php?action=create', { method: 'POST', body: fd, credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => {
+                            const fb = document.getElementById('addTrainingFeedback');
+                            if (data.success) {
+                                fb.innerHTML = '<div class="alert alert-success">Training added!</div>';
+                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('addTrainingModal')).hide(); window.location.reload(); }, 800);
+                            } else {
+                                fb.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed') + '</div>';
+                            }
+                        })
+                        .catch(() => { document.getElementById('addTrainingFeedback').innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
+                });
+            }
         });
     </script>
+
+    <!-- Staff Trainings Modal -->
+    <div class="modal fade" id="staffTrainingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Staff Trainings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="staffTrainingsContent"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- View Profile Modal -->
+    <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">View Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="profileContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editProfileContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Training Modal -->
+    <div class="modal fade" id="addTrainingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Training</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addTrainingForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Training Title</label>
+                            <input type="text" name="title" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="completion_date" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="completed">Completed</option>
+                                <option value="upcoming">Upcoming</option>
+                            </select>
+                        </div>
+                        <div id="addTrainingFeedback"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 

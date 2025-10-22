@@ -321,6 +321,17 @@ if ($view === 'training-records') {
             border-radius: 10px;
             transition: width 0.3s ease;
         }
+        
+        /* Center modals both horizontally and vertically */
+        .modal-dialog {
+            display: flex;
+            align-items: center;
+            min-height: calc(100vh - 1rem);
+        }
+        
+        .modal-content {
+            width: 100%;
+        }
     </style>
 </head>
 <body id="body">
@@ -389,7 +400,7 @@ if ($view === 'training-records') {
                     <h4>View Profile</h4>
                     <p>Check your information</p>
                 </div>
-                <div class="action-card" data-bs-toggle="modal" data-bs-target="#trainingRecordsModal" style="cursor:pointer;">
+                <div class="action-card" onclick="window.location.href='?view=training-records'" style="cursor:pointer;">
                     <i class="fas fa-book-open"></i>
                     <h4>Training Records</h4>
                     <p>Manage your trainings</p>
@@ -687,36 +698,45 @@ if ($view === 'training-records') {
             }
 
             // Edit Profile Modal
+            const attachSaveHandler = function() {
+                const profileForm = document.getElementById('profileForm');
+                const saveBtn = document.getElementById('saveProfileBtn');
+                if (!profileForm || !saveBtn) return;
+                // Remove previous listener by cloning
+                const newBtn = saveBtn.cloneNode(true);
+                saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+                newBtn.addEventListener('click', function(){
+                    const formData = new FormData(profileForm);
+                    const feedback = document.getElementById('editProfileFeedback');
+                    fetch('edit_profile_api.php?action=save', { method: 'POST', body: formData, credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
+                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); window.location.reload(); }, 1000);
+                            } else {
+                                feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
+                            }
+                        })
+                        .catch(() => { feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
+                });
+            };
+
             const editProfileModal = document.getElementById('editProfileModal');
             if (editProfileModal) {
                 editProfileModal.addEventListener('show.bs.modal', function () {
-                    // Load edit form via AJAX
                     fetch('edit_profile_api.php', { credentials: 'same-origin' })
                         .then(response => response.text())
-                        .then(data => {
-                            document.getElementById('editProfileContent').innerHTML = data;
+                        .then(html => {
+                            document.getElementById('editProfileContent').innerHTML = html;
+                            attachSaveHandler();
                         })
-                        .catch(error => {
+                        .catch(() => {
                             document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load edit form</div>';
                         });
                 });
             }
 
-            // Training Records Modal
-            const trainingRecordsModal = document.getElementById('trainingRecordsModal');
-            if (trainingRecordsModal) {
-                trainingRecordsModal.addEventListener('show.bs.modal', function () {
-                    // Load training records via AJAX
-                    fetch('training_records_api.php', { credentials: 'same-origin' })
-                        .then(response => response.text())
-                        .then(data => {
-                            document.getElementById('trainingRecordsContent').innerHTML = data;
-                        })
-                        .catch(error => {
-                            document.getElementById('trainingRecordsContent').innerHTML = '<div class="alert alert-danger">Failed to load training records</div>';
-                        });
-                });
-            }
         });
     </script>
 
@@ -765,26 +785,5 @@ if ($view === 'training-records') {
         </div>
     </div>
 
-    <!-- Training Records Modal -->
-    <div class="modal fade" id="trainingRecordsModal" tabindex="-1" aria-labelledby="trainingRecordsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="trainingRecordsModalLabel">Training Records</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="trainingRecordsContent">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

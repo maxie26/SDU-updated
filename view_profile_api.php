@@ -22,9 +22,9 @@ if (!$user_data) {
 }
 
 // Set default values
-$user_data['position'] = $user_data['position'] ?? 'Not specified';
-$user_data['office'] = $user_data['office'] ?? 'Not specified';
-$user_data['job_function'] = $user_data['job_function'] ?? 'Not specified';
+$user_data['position'] = !empty($user_data['position']) ? $user_data['position'] : 'Not specified';
+$user_data['office'] = !empty($user_data['office']) ? $user_data['office'] : 'Not specified';
+$user_data['job_function'] = !empty($user_data['job_function']) ? $user_data['job_function'] : 'Not specified';
 ?>
 
 <div class="profile-info">
@@ -85,16 +85,16 @@ $user_data['job_function'] = $user_data['job_function'] ?? 'Not specified';
                 $upcoming_count = $result_upcoming->fetch_assoc()['total'];
                 $stmt_upcoming->close();
                 ?>
-                <div class="col-md-6 mb-2">
+                <div class="col-12 mb-2">
                     <div class="d-flex justify-content-between">
                         <span>Completed Trainings:</span>
-                        <span class="badge bg-success"><?php echo $completed_count; ?></span>
+                        <span><?php echo $completed_count; ?></span>
                     </div>
                 </div>
-                <div class="col-md-6 mb-2">
+                <div class="col-12 mb-2">
                     <div class="d-flex justify-content-between">
                         <span>Upcoming Trainings:</span>
-                        <span class="badge bg-warning"><?php echo $upcoming_count; ?></span>
+                        <span><?php echo $upcoming_count; ?></span>
                     </div>
                 </div>
             </div>

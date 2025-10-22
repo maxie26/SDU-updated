@@ -14,7 +14,7 @@ $error_message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $position = isset($_POST['position']) ? $_POST['position'] : '';
-    $office = isset($_POST['office']) ? $_POST['office'] : '';
+    $job_function = isset($_POST['job_function']) ? $_POST['job_function'] : '';
     $new_password = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
 
     $conn->begin_transaction();
@@ -40,15 +40,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $result_check = $stmt_check->get_result();
 
         if ($result_check->num_rows > 0) {
-            $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, program = NULL, job_function = NULL, office = ? WHERE user_id = ?");
-            $stmt_details->bind_param("ssi", $position, $office, $user_id);
+            $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, job_function = ? WHERE user_id = ?");
+            $stmt_details->bind_param("ssi", $position, $job_function, $user_id);
             if (!$stmt_details->execute()) {
                 throw new Exception("Error updating staff details: " . $stmt_details->error);
             }
             $stmt_details->close();
         } else {
-            $stmt_details = $conn->prepare("INSERT INTO staff_details (user_id, position, program, job_function, office) VALUES (?, ?, NULL, NULL, ?)");
-            $stmt_details->bind_param("iss", $user_id, $position, $office);
+            $stmt_details = $conn->prepare("INSERT INTO staff_details (user_id, position, job_function) VALUES (?, ?, ?)");
+            $stmt_details->bind_param("iss", $user_id, $position, $job_function);
             if (!$stmt_details->execute()) {
                 throw new Exception("Error inserting staff details: " . $stmt_details->error);
             }
@@ -64,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-$stmt_fetch = $conn->prepare("SELECT u.email, s.position, s.office FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.id = ?");
+$stmt_fetch = $conn->prepare("SELECT u.email, s.position, s.job_function FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.id = ?");
 $stmt_fetch->bind_param("i", $user_id);
 $stmt_fetch->execute();
 $result_fetch = $stmt_fetch->get_result();
@@ -78,7 +78,7 @@ if (!$user_data) {
 
 $user_data['email'] = $user_data['email'] ?? '';
 $user_data['position'] = $user_data['position'] ?? '';
-$user_data['office'] = $user_data['office'] ?? '';
+$user_data['job_function'] = $user_data['job_function'] ?? '';
 
 ?>
 
@@ -212,26 +212,21 @@ $user_data['office'] = $user_data['office'] ?? '';
             <?php endif; ?>
             
             <form action="edit_profile.php" method="POST">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user_data['email']); ?>" required>
-                    </div>
-                    <?php if ($_SESSION['role'] !== 'admin'): ?>
-                    <div class="col-md-6 mb-3">
-                        <label for="position" class="form-label">Position</label>
-                        <input type="text" class="form-control" id="position" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>">
-                    </div>
-                    <?php endif; ?>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user_data['email']); ?>" required>
                 </div>
                 
                 <?php if ($_SESSION['role'] !== 'admin'): ?>
                 <div class="mb-3">
-                    <label for="office" class="form-label">Office</label>
-                    <select class="form-select" id="office" name="office">
-                        <option value="">Loading offices...</option>
-                    </select>
+                    <label for="position" class="form-label">Position</label>
+                    <input type="text" class="form-control" id="position" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>">
                 </div>
+                <div class="mb-3">
+                    <label for="job_function" class="form-label">Job Function</label>
+                    <input type="text" class="form-control" id="job_function" name="job_function" value="<?php echo htmlspecialchars($user_data['job_function']); ?>">
+                </div>
+                
                 <?php endif; ?>
                 
                 <div class="mb-4">
@@ -266,30 +261,6 @@ $user_data['office'] = $user_data['office'] ?? '';
         </div>
     </div>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const officeSelect = document.getElementById('office');
-        if (!officeSelect) return;
-        fetch('offices_api.php', { credentials: 'same-origin' })
-            .then(r => r.json())
-            .then(data => {
-                const current = <?php echo json_encode($user_data['office']); ?>;
-                officeSelect.innerHTML = '<option value="">Select your office</option>';
-                if (data && data.success && Array.isArray(data.data)) {
-                    data.data.forEach(function(o){
-                        const opt = document.createElement('option');
-                        opt.value = o.name;
-                        opt.textContent = o.name;
-                        if (current === o.name) opt.selected = true;
-                        officeSelect.appendChild(opt);
-                    });
-                } else {
-                    officeSelect.innerHTML = '<option value="">No offices available</option>';
-                }
-            })
-            .catch(() => {
-                officeSelect.innerHTML = '<option value="">Failed to load offices</option>';
-            });
-    });
     </script>
 </body>
 </html>
