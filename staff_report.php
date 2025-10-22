@@ -263,8 +263,8 @@ if (!empty($selected_offices)) {
                 <label class="form-label mb-0" for="period">Period</label>
                 <select class="form-select" id="period" name="period" style="min-width: 200px;">
                     <option value="">All</option>
-                    <option value="H1" <?php if ($selected_period==='H1') echo 'selected'; ?>>H1 (Jan-Jun)</option>
-                    <option value="H2" <?php if ($selected_period==='H2') echo 'selected'; ?>>H2 (Jul-Dec)</option>
+                    <option value="H1" <?php if ($selected_period==='H1') echo 'selected'; ?>>1st Half (Jan-Jun)</option>
+                    <option value="H2" <?php if ($selected_period==='H2') echo 'selected'; ?>>2nd Half (Jul-Dec)</option>
                 </select>
             </div>
             <div class="col-auto align-self-end">
