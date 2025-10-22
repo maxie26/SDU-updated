@@ -339,14 +339,52 @@ $active_programs = 0;
         border-color: #3f51b5 !important;
     }
 
-    /* Disable all hover effects in directory content */
-    #directoryContent .table tbody tr:hover,
-    #directoryContent .table-hover tbody tr:hover,
-    #directoryContent .table-striped tbody tr:hover,
-    #directoryContent .table tbody tr:nth-child(even):hover,
-    #directoryContent .table tbody tr:nth-child(odd):hover {
-        background-color: transparent !important;
-    }
+     /* Disable all hover effects in directory content */
+     #directoryContent .table tbody tr:hover,
+     #directoryContent .table-hover tbody tr:hover,
+     #directoryContent .table-striped tbody tr:hover,
+     #directoryContent .table tbody tr:nth-child(even):hover,
+     #directoryContent .table tbody tr:nth-child(odd):hover {
+         background-color: transparent !important;
+     }
+
+     /* Fix modal text colors to match office head and staff dashboards */
+     .modal-body .form-label {
+         color: #1e293b !important;
+     }
+     .modal-body .form-control-plaintext {
+         color: #1e293b !important;
+     }
+     .modal-body .badge {
+         color: #fff !important;
+     }
+
+     /* Fix sidebar text colors to stay white */
+     .sidebar-lg .nav-link {
+         color: #ffffff !important;
+     }
+     .sidebar-lg .nav-link:hover,
+     .sidebar-lg .nav-link:focus,
+     .sidebar-lg .nav-link:active,
+     .sidebar-lg .nav-link:visited {
+         color: #ffffff !important;
+     }
+     .sidebar-lg .nav-link.active {
+         color: #ffffff !important;
+     }
+
+     /* Center modals like staff and office head dashboards */
+     .modal-dialog {
+         display: flex;
+         align-items: center;
+         min-height: calc(100vh - 1rem);
+     }
+     .modal-content {
+         border-radius: 14px;
+     }
+     .modal-header .btn-close {
+         margin: -0.25rem -0.25rem -0.25rem auto;
+     }
 </style>
 </head>
 <body id="body">

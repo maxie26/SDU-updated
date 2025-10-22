@@ -498,7 +498,7 @@ if (!empty($office)) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn" style="background-color: #1a237e; border-color: #1a237e;">Save Changes</button>
                 </div>
             </div>
         </div>
