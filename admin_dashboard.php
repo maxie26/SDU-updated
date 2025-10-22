@@ -461,7 +461,7 @@ $active_programs = 0;
 
         <?php if ($view === 'overview'): ?>
             <div class="header mb-4">
-                <h1 class="fw-bold mb-2" style="color: #1e293b;">Welcome back, <?php echo htmlspecialchars($admin_username); ?>!</h1>
+                <h1 class="fw-bold mb-2" style="color: #1e293b;">Welcome, <?php echo htmlspecialchars($admin_username); ?>!</h1>
                 <p class="mb-0" style="color: #6b7280;">Here's what's happening with your organization today.</p>
             </div>
             <div class="stats-cards">
@@ -477,10 +477,6 @@ $active_programs = 0;
                     <h3>Trainings Completed</h3>
                     <p><?php echo $trainings_completed; ?></p>
                 </div>
-            </div>
-            <div class="content-box">
-                <h2>Recent Activity</h2>
-                <p>Content for recent activity will go here.</p>
             </div>
         <?php elseif ($view === 'directory'): ?>
             <div class="content-box">

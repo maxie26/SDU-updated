@@ -373,7 +373,7 @@ if ($view === 'training-records') {
     <div class="main-content">
         <?php if ($view === 'overview'): ?>
             <div class="header mb-4">
-                <h1 class="text-dark fw-bold mb-2">Welcome back, <?php echo htmlspecialchars($staff_username); ?>!</h1>
+                <h1 class="text-dark fw-bold mb-2">Welcome, <?php echo htmlspecialchars($staff_username); ?>!</h1>
                 <p class="text-white-50 mb-0">Manage your training records and track your progress.</p>
             </div>
             
