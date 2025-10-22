@@ -59,7 +59,7 @@ if (!empty($office)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             display: flex;
             background-color: #f0f2f5;
         }
@@ -80,7 +80,28 @@ if (!empty($office)) {
         }
         .sidebar .nav-link { color: white; padding: 12px 20px; border-radius: 5px; margin: 5px 15px; transition: background-color 0.2s; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #3f51b5; }
-        .content-box { background-color: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 1.5rem; }
+        .content-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .content-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .content-box h2 {
+            margin-top: 0;
+            color: #1e293b;
+            border-bottom: 3px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
         /* Transparent sidebar toggle like admin */
         .sidebar .btn-toggle { background-color: transparent; border: none; color: #ffffff; padding: 6px 10px; }
         .sidebar .btn-toggle:focus { box-shadow: none; }
@@ -94,16 +115,66 @@ if (!empty($office)) {
             body.toggled .sidebar .nav-link span { display: none; }
             body.toggled .sidebar h3 { display: none; }
         }
-        .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: .25rem; }
-        .header p { color: #6b7280; font-size: .95rem; margin: 0; }
+        .header h1 { 
+            font-size: 2rem; 
+            font-weight: 800; 
+            margin-bottom: .25rem; 
+            color: #1e293b;
+        }
+        .header p { 
+            color: #6b7280; 
+            font-size: .95rem; 
+            margin: 0; 
+        }
 
         .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .card { position: relative; background-color: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 1.25rem 1.25rem 1.25rem 4.25rem; text-align: left; border: 0; }
-        .card .icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.25rem; }
-        .card h3 { margin: 0 0 0.25rem; color: #111827; font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-        .card p { font-size: 2rem; font-weight: 800; color: #111827; margin: 0; }
-        .stats-cards .card:nth-child(1) .icon { background: #0ea5e9; }
-        .stats-cards .card:nth-child(2) .icon { background: #10b981; }
+        .card { 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--card-color), var(--card-color-light));
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .card h3 {
+            margin: 0 0 1rem;
+            color: var(--card-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .card p {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 0;
+            color: var(--card-color);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card:nth-child(1) { 
+            --card-color: #6366f1;
+            --card-color-light: #a5b4fc;
+        }
+        .card:nth-child(2) { 
+            --card-color: #10b981;
+            --card-color-light: #6ee7b7;
+        }
 
         /* Buttons consistency */
         .btn-primary,
@@ -114,6 +185,58 @@ if (!empty($office)) {
         .modal-dialog { display: flex; align-items: center; min-height: calc(100vh - 1rem); }
         .modal-content { border-radius: 14px; }
         .modal-header .btn-close { margin: -0.25rem -0.25rem -0.25rem auto; }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+                margin-left: 0 !important;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem 1rem;
+            }
+            
+            .card p {
+                font-size: 2rem;
+            }
+            
+            .content-box {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .content-box {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+        }
     </style>
     </head>
 <body id="body">
@@ -160,12 +283,10 @@ if (!empty($office)) {
             </div>
             <div class="stats-cards">
                 <div class="card">
-                    <div class="icon"><i class="fas fa-users"></i></div>
                     <h3>Staff in Your Office</h3>
                     <p><?php echo $total_staff_in_office; ?></p>
                 </div>
                 <div class="card">
-                    <div class="icon"><i class="fas fa-check-circle"></i></div>
                     <h3>Completed Trainings (Office)</h3>
                     <p><?php echo $completed_trainings_in_office; ?></p>
                 </div>

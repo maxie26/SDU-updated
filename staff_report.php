@@ -81,8 +81,7 @@ if (!empty($selected_offices)) {
     <style>
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-attachment: fixed;
+            background-color: #f0f2f5;
             min-height: 100vh;
         }
         .container { 
@@ -91,17 +90,13 @@ if (!empty($selected_offices)) {
             padding: 0 1rem;
         }
         .card { 
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            padding: 1.5rem;
         }
         .table-responsive { 
             overflow-x: auto; 
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .back-link { 
             margin-bottom: 2rem; 
@@ -119,16 +114,14 @@ if (!empty($selected_offices)) {
             box-shadow: 0 8px 25px rgba(107, 114, 128, 0.3);
         }
         .btn-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            background-color: #1a237e;
             border: none;
             border-radius: 12px;
             padding: 0.75rem 1.5rem;
             font-weight: 600;
-            transition: all 0.3s ease;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+            background-color: #3f51b5;
         }
         .form-select, .form-control {
             border: 2px solid #e5e7eb;
@@ -141,20 +134,21 @@ if (!empty($selected_offices)) {
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
         .table {
-            border-radius: 12px;
-            overflow: hidden;
+            margin-bottom: 0;
         }
         .table thead th {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            color: #475569;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            border: none;
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
         }
-        .table tbody tr:hover {
-            background-color: #f8fafc;
+        .table tbody tr:hover,
+        .table-hover tbody tr:hover,
+        .table-striped tbody tr:hover {
+            background-color: transparent !important;
+        }
+        .table tbody tr:nth-child(even):hover {
+            background-color: transparent !important;
         }
         .badge {
             border-radius: 8px;
@@ -214,22 +208,27 @@ if (!empty($selected_offices)) {
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
+<?php $embed = isset($_GET['embed']) && $_GET['embed'] == '1'; ?>
+
+<div class="container" style="<?php echo $embed ? 'max-width:100%; margin:0; padding:0;' : '' ; ?>">
+    <div class="card" style="<?php echo $embed ? 'border-radius:12px; box-shadow:none; background:#fff;' : '' ; ?>">
+        <?php if (!$embed): ?>
         <nav class="back-link">
             <a href="admin_dashboard.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Go back to Dashboard
             </a>
         </nav>
+        <?php endif; ?>
         
         <h2 class="text-center mb-4 text-dark fw-bold">Staff/Head Directory & Bi-Yearly Report</h2>
         <p class="text-center text-muted mb-4">Filter and view staff information with training records</p>
         
         <form class="row gy-2 gx-3 align-items-center mb-3" method="get" action="staff_report.php" id="filtersForm">
+            <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
             <div class="col-auto">
                 <label class="form-label mb-0" for="officesDropdown">Offices</label>
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="officesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="officesDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 200px;">
                         <?php echo empty($selected_offices) ? 'All' : (count($selected_offices) . ' selected'); ?>
                     </button>
                     <ul class="dropdown-menu p-2" aria-labelledby="officesDropdown" style="max-height:240px; overflow:auto; min-width: 320px;">
@@ -254,7 +253,7 @@ if (!empty($selected_offices)) {
             </div>
             <div class="col-auto">
                 <label class="form-label mb-0" for="role">Role</label>
-                <select class="form-select" id="role" name="role">
+                <select class="form-select" id="role" name="role" style="min-width: 200px;">
                     <option value="">All</option>
                     <option value="staff" <?php if ($selected_role==='staff') echo 'selected'; ?>>Staff</option>
                     <option value="head" <?php if ($selected_role==='head') echo 'selected'; ?>>Head</option>
@@ -262,7 +261,7 @@ if (!empty($selected_offices)) {
             </div>
             <div class="col-auto">
                 <label class="form-label mb-0" for="period">Period</label>
-                <select class="form-select" id="period" name="period">
+                <select class="form-select" id="period" name="period" style="min-width: 200px;">
                     <option value="">All</option>
                     <option value="H1" <?php if ($selected_period==='H1') echo 'selected'; ?>>H1 (Jan-Jun)</option>
                     <option value="H2" <?php if ($selected_period==='H2') echo 'selected'; ?>>H2 (Jul-Dec)</option>
@@ -274,7 +273,7 @@ if (!empty($selected_offices)) {
         </form>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Username</th>

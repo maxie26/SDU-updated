@@ -58,8 +58,7 @@ $active_programs = 0;
     body { 
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; 
         display: flex; 
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        background-attachment: fixed;
+        background-color: #f0f2f5;
         transition: margin-left 0.3s ease-in-out; 
     }
 
@@ -330,6 +329,24 @@ $active_programs = 0;
     tr:last-child td {
         border-bottom: none;
     }
+
+    .btn-primary {
+        background-color: #1a237e !important;
+        border-color: #1a237e !important;
+    }
+    .btn-primary:hover {
+        background-color: #3f51b5 !important;
+        border-color: #3f51b5 !important;
+    }
+
+    /* Disable all hover effects in directory content */
+    #directoryContent .table tbody tr:hover,
+    #directoryContent .table-hover tbody tr:hover,
+    #directoryContent .table-striped tbody tr:hover,
+    #directoryContent .table tbody tr:nth-child(even):hover,
+    #directoryContent .table tbody tr:nth-child(odd):hover {
+        background-color: transparent !important;
+    }
 </style>
 </head>
 <body id="body">
@@ -366,10 +383,7 @@ $active_programs = 0;
             <button id="sidebar-toggle" class="btn btn-toggle"><i class="fas fa-bars"></i></button>
         </div>
         
-        <div class="profile-pic text-center mb-4">
-            <div style="width: 80px; height: 80px; background-color: #ffffffff; border-radius: 50%; margin: 0 auto;"></div>
-            <p class="mt-2 text-white">Admin</p>
-        </div>
+        
         
         <ul class="nav flex-column">
             <li class="nav-item">
@@ -378,17 +392,17 @@ $active_programs = 0;
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="staff_report.php">
+                <a class="nav-link <?= $view === 'directory' ? 'active' : '' ?>" href="?view=directory">
                     <i class="fas fa-users me-2"></i> <span>Directory & Reports</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="view_profile.php">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
                     <i class="fas fa-user me-2"></i> <span>View Profile</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="edit_profile.php">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                     <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
                 </a>
             </li>
@@ -409,8 +423,8 @@ $active_programs = 0;
 
         <?php if ($view === 'overview'): ?>
             <div class="header mb-4">
-                <h1 class="text-white fw-bold mb-2">Welcome back, <?php echo htmlspecialchars($admin_username); ?>!</h1>
-                <p class="text-white-50 mb-0">Here's what's happening with your organization today.</p>
+                <h1 class="fw-bold mb-2" style="color: #1e293b;">Welcome back, <?php echo htmlspecialchars($admin_username); ?>!</h1>
+                <p class="mb-0" style="color: #6b7280;">Here's what's happening with your organization today.</p>
             </div>
             <div class="stats-cards">
                 <div class="card">
@@ -430,47 +444,59 @@ $active_programs = 0;
                 <h2>Recent Activity</h2>
                 <p>Content for recent activity will go here.</p>
             </div>
-        <?php elseif ($view === 'staff-directory'): ?>
+        <?php elseif ($view === 'directory'): ?>
             <div class="content-box">
-                <h2>Staff Directory</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Position</th>
-                            <th>Program</th>
-                            <th>Job Function</th>
-                            <th>Office</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $query_staff = "SELECT * FROM users WHERE role IN ('staff', 'head')";
-                        $result_staff = $conn->query($query_staff);
-                        if ($result_staff->num_rows > 0) {
-                            while ($staff = $result_staff->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . htmlspecialchars($staff['username']) . "</td>";
-                                echo "<td>" . htmlspecialchars($staff['position']) . "</td>";
-                                echo "<td>" . htmlspecialchars($staff['program']) . "</td>";
-                                echo "<td>" . htmlspecialchars($staff['job_function']) . "</td>";
-                                echo "<td>" . htmlspecialchars($staff['office']) . "</td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='5'>No staff members found.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php elseif ($view === 'training-records'): ?>
-            <div class="content-box">
-                <h2>Training Records</h2>
-                <p>This section will show a list of trainings and the staff who attended them. </p>
+                <h2>Directory & Reports</h2>
+                <div id="directoryContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
     </div>
+    
+    <!-- View Profile Modal -->
+    <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">View Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="profileContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editProfileContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn" style="background-color: #1a237e; border-color: #1a237e;">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -481,6 +507,90 @@ $active_programs = 0;
                     const body = document.getElementById('body');
                     body.classList.toggle('toggled');
                 });
+            }
+
+            // Load View Profile modal content
+            const viewProfileModal = document.getElementById('viewProfileModal');
+            if (viewProfileModal) {
+                viewProfileModal.addEventListener('show.bs.modal', function () {
+                    fetch('view_profile_api.php', { credentials: 'same-origin' })
+                        .then(r => r.text())
+                        .then(html => { document.getElementById('profileContent').innerHTML = html; })
+                        .catch(() => { document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Failed to load profile</div>'; });
+                });
+            }
+
+            // Load Edit Profile form into modal and handle save
+            const attachSaveHandler = function() {
+                const profileForm = document.getElementById('profileForm');
+                const saveBtn = document.getElementById('saveProfileBtn');
+                if (!profileForm || !saveBtn) return;
+                const newBtn = saveBtn.cloneNode(true);
+                saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+                newBtn.addEventListener('click', function(){
+                    const formData = new FormData(profileForm);
+                    const feedback = document.getElementById('editProfileFeedback');
+                    fetch('edit_profile_api.php?action=save', { method: 'POST', body: formData, credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
+                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); window.location.reload(); }, 1000);
+                            } else {
+                                feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
+                            }
+                        })
+                        .catch(() => { feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
+                });
+            };
+
+            const editProfileModal = document.getElementById('editProfileModal');
+            if (editProfileModal) {
+                editProfileModal.addEventListener('show.bs.modal', function () {
+                    fetch('edit_profile_api.php', { credentials: 'same-origin' })
+                        .then(r => r.text())
+                        .then(html => { document.getElementById('editProfileContent').innerHTML = html; attachSaveHandler(); })
+                        .catch(() => { document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load form</div>'; });
+                });
+            }
+
+            // Load Directory & Reports content when directory view is active
+            const directoryContent = document.getElementById('directoryContent');
+            function loadDirectory(queryString) {
+                const qs = queryString ? ('?' + queryString) : '?embed=1';
+                const url = qs.includes('embed=1') ? ('staff_report.php' + (qs.startsWith('?') ? qs : ('?' + qs)))
+                                                   : ('staff_report.php?embed=1' + (qs ? ('&' + qs.replace(/^\?/, '')) : ''));
+                directoryContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+                fetch(url, { credentials: 'same-origin' })
+                    .then(r => r.text())
+                    .then(html => {
+                        directoryContent.innerHTML = html;
+                        attachDirectoryHandlers();
+                    })
+                    .catch(() => { directoryContent.innerHTML = '<div class="alert alert-danger">Failed to load Directory & Reports</div>'; });
+            }
+
+            function attachDirectoryHandlers() {
+                const form = directoryContent.querySelector('#filtersForm');
+                if (!form) return;
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    // gather params
+                    const role = directoryContent.querySelector('#role')?.value || '';
+                    const period = directoryContent.querySelector('#period')?.value || '';
+                    const officeChecks = Array.from(directoryContent.querySelectorAll('.office-check'));
+                    const selected = officeChecks.filter(c => c.checked).map(c => c.value);
+                    const params = new URLSearchParams();
+                    params.set('embed', '1');
+                    if (role) params.set('role', role);
+                    if (period) params.set('period', period);
+                    selected.forEach(v => params.append('offices[]', v));
+                    loadDirectory(params.toString());
+                });
+            }
+
+            if (directoryContent && window.location.search.includes('view=directory')) {
+                loadDirectory('embed=1');
             }
         });
     </script>

@@ -28,6 +28,27 @@ $user_data['job_function'] = !empty($user_data['job_function']) ? $user_data['jo
 ?>
 
 <div class="profile-info">
+    <?php if ($user_data['role'] === 'admin'): ?>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Username</label>
+            <p class="form-control-plaintext"><?php echo htmlspecialchars($user_data['username']); ?></p>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Email</label>
+            <p class="form-control-plaintext"><?php echo htmlspecialchars($user_data['email']); ?></p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Role</label>
+            <p class="form-control-plaintext">
+                <span class="badge bg-primary"><?php echo htmlspecialchars(ucfirst($user_data['role'])); ?></span>
+            </p>
+        </div>
+    </div>
+    <?php else: ?>
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label fw-bold">Username</label>
@@ -100,4 +121,5 @@ $user_data['job_function'] = !empty($user_data['job_function']) ? $user_data['jo
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
