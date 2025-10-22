@@ -325,7 +325,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="form-group" id="office-group" style="display:none;">
                         <label for="office">OFFICE</label>
                         <select id="office" name="office">
-                            <option value="">Loading offices...</option>
+                            <option value="">Select your office</option>
+                            <option value="Ateneo Center for Culture & the Arts (ACCA)">Ateneo Center for Culture & the Arts (ACCA)</option>
+                            <option value="Ateneo Center for Environment & Sustainability (ACES)">Ateneo Center for Environment & Sustainability (ACES)</option>
+                            <option value="Ateneo Center for Leadership & Governance (ACLG)">Ateneo Center for Leadership & Governance (ACLG)</option>
+                            <option value="Ateneo Peace Institute (API)">Ateneo Peace Institute (API)</option>
+                            <option value="Center for Community Extension Services (CCES)">Center for Community Extension Services (CCES)</option>
+                            <option value="Ateneo Learning and Teaching Excellence Center (ALTEC)">Ateneo Learning and Teaching Excellence Center (ALTEC)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -372,29 +378,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     [adminRadio, staffRadio, headRadio].forEach(r => r.addEventListener('change', toggleOffice));
     toggleOffice();
-
-    // Load offices dynamically
-    const officeSelect = document.getElementById('office');
-    if (officeSelect) {
-        fetch('offices_api.php', { credentials: 'same-origin' })
-            .then(r => r.json())
-            .then(data => {
-                officeSelect.innerHTML = '<option value="">Select your office</option>';
-                if (data && data.success && Array.isArray(data.data)) {
-                    data.data.forEach(function(o){
-                        const opt = document.createElement('option');
-                        opt.value = o.name;
-                        opt.textContent = o.name;
-                        officeSelect.appendChild(opt);
-                    });
-                } else {
-                    officeSelect.innerHTML = '<option value="">No offices available</option>';
-                }
-            })
-            .catch(() => {
-                officeSelect.innerHTML = '<option value="">Failed to load offices</option>';
-            });
-    }
  </script>
 </body>
 </html>
