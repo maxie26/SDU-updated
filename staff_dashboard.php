@@ -84,7 +84,7 @@ if ($view === 'training-records') {
     $query_records = "
         SELECT ut.id, t.title, t.description, ut.completion_date, ut.status
         FROM user_trainings ut
-        JOIN trainings t ON ut.training_id = t.id
+        LEFT JOIN trainings t ON ut.training_id = t.id
         WHERE ut.user_id = ?
         ORDER BY ut.completion_date DESC
     ";
