@@ -640,6 +640,10 @@ if ($view === 'training-records') {
                     form.elements['id'].value = button.getAttribute('data-training-id');
                     form.elements['title'].value = button.getAttribute('data-title');
                     form.elements['completion_date'].value = button.getAttribute('data-date');
+                    // Populate description (was missing) so textarea shows existing description when editing
+                    if (form.elements['description']) {
+                        form.elements['description'].value = button.getAttribute('data-description') || '';
+                    }
                     form.elements['status'].value = button.getAttribute('data-status');
                 });
             }
