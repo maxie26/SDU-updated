@@ -74,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-
     }
 
     .login-container {
