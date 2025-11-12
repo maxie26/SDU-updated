@@ -81,9 +81,15 @@ $stmt_activities->execute();
 $result_activities = $stmt_activities->get_result();
 
 if ($view === 'training-records') {
-    $query_records = "SELECT ut.id, t.title, ut.completion_date, ut.status FROM user_trainings ut JOIN trainings t ON ut.training_id = t.id WHERE ut.user_id = ? ORDER BY ut.completion_date DESC";
+    $query_records = "
+        SELECT ut.id, t.title, t.description, ut.completion_date, ut.status
+        FROM user_trainings ut
+        JOIN trainings t ON ut.training_id = t.id
+        WHERE ut.user_id = ?
+        ORDER BY ut.completion_date DESC
+    ";
     $stmt_records = $conn->prepare($query_records);
-    $stmt_records->bind_param("i", $user_id);
+    $stmt_records->bind_param('i', $user_id);
     $stmt_records->execute();
     $result_records = $stmt_records->get_result();
 }
