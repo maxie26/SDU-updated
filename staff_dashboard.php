@@ -472,6 +472,7 @@ if ($view === 'training-records') {
                 <thead>
                     <tr>
                         <th scope="col">Training Title</th>
+                        <th scope="col">Description</th>
                         <th scope="col">Date</th>
                         <th scope="col">Status</th>
                         <th scope="col">Actions</th>
@@ -481,6 +482,7 @@ if ($view === 'training-records') {
                     <?php while ($row = $result_records->fetch_assoc()): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($row['title']); ?></td>
+                            <td><?php echo htmlspecialchars($row['description']); ?></td>
                             <td><?php echo htmlspecialchars($row['completion_date']); ?></td>
                             <td>
                                 <span class="badge <?php echo $row['status'] === 'completed' ? 'bg-success' : 'bg-warning'; ?>">
@@ -499,6 +501,7 @@ if ($view === 'training-records') {
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTrainingModal"
                                         data-training-id="<?php echo $row['id']; ?>"
                                         data-title="<?php echo htmlspecialchars($row['title']); ?>"
+                                        data-description="<?php echo htmlspecialchars($row['description']); ?>"
                                         data-date="<?php echo htmlspecialchars($row['completion_date']); ?>"
                                         data-status="<?php echo htmlspecialchars($row['status']); ?>">
                                         <i class="fas fa-edit"></i> Edit
