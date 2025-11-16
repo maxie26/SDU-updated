@@ -81,9 +81,15 @@ $stmt_activities->execute();
 $result_activities = $stmt_activities->get_result();
 
 if ($view === 'training-records') {
-    $query_records = "SELECT ut.id, t.title, ut.completion_date, ut.status FROM user_trainings ut JOIN trainings t ON ut.training_id = t.id WHERE ut.user_id = ? ORDER BY ut.completion_date DESC";
+    $query_records = "
+        SELECT ut.id, t.title, t.description, ut.completion_date, ut.status
+        FROM user_trainings ut
+        LEFT JOIN trainings t ON ut.training_id = t.id
+        WHERE ut.user_id = ?
+        ORDER BY ut.completion_date DESC
+    ";
     $stmt_records = $conn->prepare($query_records);
-    $stmt_records->bind_param("i", $user_id);
+    $stmt_records->bind_param('i', $user_id);
     $stmt_records->execute();
     $result_records = $stmt_records->get_result();
 }
@@ -475,6 +481,7 @@ if ($view === 'training-records') {
                 <thead>
                     <tr>
                         <th scope="col">Training Title</th>
+                        <th scope="col">Description</th>
                         <th scope="col">Date</th>
                         <th scope="col">Status</th>
                         <th scope="col">Actions</th>
@@ -484,6 +491,7 @@ if ($view === 'training-records') {
                     <?php while ($row = $result_records->fetch_assoc()): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($row['title']); ?></td>
+                            <td><?php echo htmlspecialchars($row['description']); ?></td>
                             <td><?php echo htmlspecialchars($row['completion_date']); ?></td>
                             <td>
                                 <span class="badge <?php echo $row['status'] === 'completed' ? 'bg-success' : 'bg-warning'; ?>">
@@ -502,6 +510,7 @@ if ($view === 'training-records') {
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTrainingModal"
                                         data-training-id="<?php echo $row['id']; ?>"
                                         data-title="<?php echo htmlspecialchars($row['title']); ?>"
+                                        data-description="<?php echo htmlspecialchars($row['description']); ?>"
                                         data-date="<?php echo htmlspecialchars($row['completion_date']); ?>"
                                         data-status="<?php echo htmlspecialchars($row['status']); ?>">
                                         <i class="fas fa-edit"></i> Edit
@@ -634,6 +643,10 @@ if ($view === 'training-records') {
                     form.elements['id'].value = button.getAttribute('data-training-id');
                     form.elements['title'].value = button.getAttribute('data-title');
                     form.elements['completion_date'].value = button.getAttribute('data-date');
+                    // Populate description (was missing) so textarea shows existing description when editing
+                    if (form.elements['description']) {
+                        form.elements['description'].value = button.getAttribute('data-description') || '';
+                    }
                     form.elements['status'].value = button.getAttribute('data-status');
                 });
             }
