@@ -352,6 +352,9 @@ if ($view === 'training-records') {
                     <i class="fas fa-book-open me-2"></i> <span>Training Records</span>
                 </a>
             </li>
+            <a href="messages_inbox.php" class="nav-link">
+    <i class="fas fa-inbox"></i> Inbox <span id="unreadBadge" class="badge bg-danger"></span>
+</a>
             <li class="nav-item">
                 <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
                     <i class="fas fa-user me-2"></i> <span>View Profile</span>
@@ -738,6 +741,20 @@ if ($view === 'training-records') {
             }
 
         });
+        // Update unread count on staff dashboard
+async function updateUnreadCount() {
+    const res = await fetch('get_unread_count.php');
+    const j = await res.json();
+    const badge = document.getElementById('unreadBadge');
+    if (j.count > 0) {
+        badge.textContent = j.count;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+updateUnreadCount();
+setInterval(updateUnreadCount, 5000);
     </script>
 
     <!-- View Profile Modal -->

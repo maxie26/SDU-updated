@@ -54,6 +54,7 @@ $active_programs = 0;
 <title>Admin Dashboard</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
     body { 
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; 
@@ -432,6 +433,11 @@ $active_programs = 0;
             <li class="nav-item">
                 <a class="nav-link <?= $view === 'directory' ? 'active' : '' ?>" href="?view=directory">
                     <i class="fas fa-users me-2"></i> <span>Directory & Reports</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="admin_messages.php">
+                    <i class="fas fa-envelope me-2"></i> <span>Messaging</span>
                 </a>
             </li>
             <li class="nav-item">
