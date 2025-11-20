@@ -7,22 +7,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Query staff who have any non-completed trainings
-$query = "
-    SELECT u.id, u.username, u.email, COUNT(ut.id) AS deficiency_count
-    FROM users u
-    JOIN user_trainings ut ON ut.user_id = u.id
-    WHERE ut.status IS NULL OR ut.status != 'completed'
-    GROUP BY u.id
-    ORDER BY deficiency_count DESC, u.username ASC
-";
-$res = $conn->query($query);
-$staffs = [];
-if ($res) {
-    while ($r = $res->fetch_assoc()) {
-        $staffs[] = $r;
-    }
-}
+// Staff list will be loaded dynamically via `get_staff.php`
 ?>
 <!doctype html>
 <html lang="en">
@@ -55,39 +40,7 @@ if ($res) {
             <h5 class="mb-0">Staff with Training Deficiencies</h5>
         </div>
         <div class="card-body">
-            <?php if (empty($staffs)): ?>
-                <div class="alert alert-info"><i class="fas fa-info-circle"></i> No staff with deficiencies found.</div>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Staff Name</th>
-                                <th>Email</th>
-                                <th>Deficiencies</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($staffs as $s): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($s['username']); ?></td>
-                                <td><?php echo htmlspecialchars($s['email']); ?></td>
-                                <td><span class="badge bg-warning text-dark"><?php echo intval($s['deficiency_count']); ?></span></td>
-                                <td>
-                                    <button class="btn btn-primary btn-sm compose-btn" data-id="<?php echo $s['id']; ?>" data-name="<?php echo htmlspecialchars($s['username']); ?>">
-                                        <i class="fas fa-pen"></i> Compose
-                                    </button>
-                                    <button class="btn btn-outline-secondary btn-sm view-history-btn" data-id="<?php echo $s['id']; ?>" data-name="<?php echo htmlspecialchars($s['username']); ?>">
-                                        <i class="fas fa-history"></i> History
-                                    </button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
+            <div id="staffTableContainer">Loading staff...</div>
         </div>
     </div>
 </div>
@@ -138,22 +91,59 @@ if ($res) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Compose button handler
-document.querySelectorAll('.compose-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        const name = btn.dataset.name;
-        document.getElementById('composerName').textContent = name;
-        document.getElementById('composerReceiver').value = id;
-        document.getElementById('composerMessage').value = '';
-        document.getElementById('composerAlert').innerHTML = '';
-
-        // Load deficiencies
-        const res = await fetch('get_deficiencies.php?staff_id=' + id);
+// Load staff dynamically and render table
+async function loadStaffs() {
+    const container = document.getElementById('staffTableContainer');
+    container.innerHTML = 'Loading staff...';
+    try {
+        const res = await fetch('get_staff.php');
         const j = await res.json();
+        if (!j.success) {
+            container.innerHTML = '<div class="alert alert-danger">Failed to load staff</div>';
+            return;
+        }
+        if (!j.staff || !j.staff.length) {
+            container.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> No staff found.</div>';
+            return;
+        }
+
+        let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Staff Name</th><th>Email</th><th>Deficiencies</th><th>Actions</th></tr></thead><tbody>';
+        j.staff.forEach(s => {
+            html += `<tr data-id="${s.id}" data-name="${escapeHtml(s.username)}">` +
+                    `<td>${escapeHtml(s.username)}</td>` +
+                    `<td>${escapeHtml(s.email || '')}</td>` +
+                    `<td><span class="badge bg-warning text-dark">${parseInt(s.deficiency_count||0)}</span></td>` +
+                    `<td>` +
+                    `<button class="btn btn-primary btn-sm compose-btn" data-id="${s.id}" data-name="${escapeHtml(s.username)}"><i class="fas fa-pen"></i> Compose</button> ` +
+                    `<button class="btn btn-outline-secondary btn-sm view-history-btn" data-id="${s.id}" data-name="${escapeHtml(s.username)}"><i class="fas fa-history"></i> History</button>` +
+                    `</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+
+        // attach handlers via delegation
+        container.querySelectorAll('.compose-btn').forEach(btn => btn.addEventListener('click', composeHandler));
+        container.querySelectorAll('.view-history-btn').forEach(btn => btn.addEventListener('click', historyHandler));
+
+    } catch (e) {
+        container.innerHTML = '<div class="alert alert-danger">Error loading staff.</div>';
+    }
+}
+
+function composeHandler(e) {
+    const btn = e.currentTarget;
+    const id = btn.dataset.id;
+    const name = btn.dataset.name;
+    document.getElementById('composerName').textContent = name;
+    document.getElementById('composerReceiver').value = id;
+    document.getElementById('composerMessage').value = '';
+    document.getElementById('composerAlert').innerHTML = '';
+
+    // Load deficiencies
+    fetch('get_deficiencies.php?staff_id=' + id).then(r => r.json()).then(j => {
         const list = document.getElementById('deficiencyList');
         list.innerHTML = '';
-        if (j.success && j.deficiencies.length) {
+        if (j.success && j.deficiencies && j.deficiencies.length) {
             let html = '<div class="alert alert-warning"><strong>Incomplete Trainings:</strong><ul class="mb-0">';
             j.deficiencies.forEach(d => {
                 html += '<li>' + (d.title || 'Untitled') + ' — <small>Status: ' + (d.status || 'Not Started').toUpperCase() + '</small></li>';
@@ -163,24 +153,24 @@ document.querySelectorAll('.compose-btn').forEach(btn => {
         } else {
             list.innerHTML = '<div class="alert alert-info"><i class="fas fa-check-circle"></i> No deficiencies found.</div>';
         }
-
+        var modal = new bootstrap.Modal(document.getElementById('composerModal'));
+        modal.show();
+    }).catch(()=>{
+        document.getElementById('deficiencyList').innerHTML = '<div class="alert alert-danger">Failed to load deficiencies.</div>';
         var modal = new bootstrap.Modal(document.getElementById('composerModal'));
         modal.show();
     });
-});
+}
 
-// View history button handler
-document.querySelectorAll('.view-history-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        const name = btn.dataset.name;
-        document.getElementById('historyName').textContent = name;
+function historyHandler(e) {
+    const btn = e.currentTarget;
+    const id = btn.dataset.id;
+    const name = btn.dataset.name;
+    document.getElementById('historyName').textContent = name;
+    const conv = document.getElementById('historyConversation');
+    conv.innerHTML = '';
 
-        const res = await fetch('get_messages.php?staff_id=' + id);
-        const j = await res.json();
-        const conv = document.getElementById('historyConversation');
-        conv.innerHTML = '';
-        
+    fetch('get_messages.php?staff_id=' + id).then(r => r.json()).then(j => {
         if (!j.success || !j.messages.length) {
             conv.innerHTML = '<p class="text-muted">No messages with this staff.</p>';
         } else {
@@ -188,18 +178,21 @@ document.querySelectorAll('.view-history-btn').forEach(btn => {
                 const div = document.createElement('div');
                 div.className = 'mb-3 p-2 border-bottom';
                 const isSender = m.sender_id == <?php echo $_SESSION['user_id']; ?>;
-                div.innerHTML = '<small class="text-muted d-block">' + 
-                    (isSender ? '<i class="fas fa-arrow-right text-primary"></i> To ' : '<i class="fas fa-arrow-left text-success"></i> From ') + 
+                div.innerHTML = '<small class="text-muted d-block">' +
+                    (isSender ? '<i class="fas fa-arrow-right text-primary"></i> To ' : '<i class="fas fa-arrow-left text-success"></i> From ') +
                     (m.sender_name || 'System') + ' — ' + m.created_at + '</small>' +
                     '<div class="mt-1">' + escapeHtml(m.message) + '</div>';
                 conv.appendChild(div);
             });
         }
-
+        var modal = new bootstrap.Modal(document.getElementById('historyModal'));
+        modal.show();
+    }).catch(()=>{
+        conv.innerHTML = '<p class="text-danger">Failed to load messages.</p>';
         var modal = new bootstrap.Modal(document.getElementById('historyModal'));
         modal.show();
     });
-});
+}
 
 // Composer form submission
 document.getElementById('composerForm').addEventListener('submit', async (e) => {
@@ -232,8 +225,17 @@ document.getElementById('composerForm').addEventListener('submit', async (e) => 
 });
 
 function escapeHtml(text) {
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    try {
+        if (text === null || text === undefined) return '(no message)';
+        text = String(text);
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    } catch (e) {
+        return '(unrenderable message)';
+    }
 }
+
+// initialize
+loadStaffs();
 </script>
 </body>
 </html>

@@ -1,14 +1,102 @@
 <?php
 session_start();
-include("db.php");
+include 'db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
+    header('Location: login.php');
+    exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$username = $_SESSION['username'];
+$user_id = intval($_SESSION['user_id']);
+$username = $_SESSION['username'] ?? '';
+
+// Handle POST actions: send message, mark_read, delete
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Mark selected messages as read
+    if (isset($_POST['action']) && $_POST['action'] === 'mark_read' && !empty($_POST['ids']) && is_array($_POST['ids'])) {
+        $ids = array_map('intval', $_POST['ids']);
+        $ids = array_filter($ids);
+        if (!empty($ids)) {
+            $in = implode(',', $ids);
+            $sql = "UPDATE messages SET is_read = 1 WHERE id IN ($in) AND receiver_id = ?";
+            $stmt = $conn->prepare($sql);
+            if ($stmt) { $stmt->bind_param('i', $user_id); $stmt->execute(); $stmt->close(); }
+        }
+        header('Location: messages_inbox.php'); exit;
+    }
+
+    // Delete selected messages (allowed if user is sender or receiver)
+    if (isset($_POST['action']) && $_POST['action'] === 'delete' && !empty($_POST['ids']) && is_array($_POST['ids'])) {
+        $ids = array_map('intval', $_POST['ids']);
+        $ids = array_filter($ids);
+        if (!empty($ids)) {
+            $in = implode(',', $ids);
+            $sql = "DELETE FROM messages WHERE id IN ($in) AND (receiver_id = ? OR sender_id = ?)";
+            $stmt = $conn->prepare($sql);
+            if ($stmt) { $stmt->bind_param('ii', $user_id, $user_id); $stmt->execute(); $stmt->close(); }
+        }
+        header('Location: messages_inbox.php'); exit;
+    }
+
+    // Sending a message (optional)
+    if (isset($_POST['message']) && isset($_POST['receiver_id'])) {
+        $receiver_id = intval($_POST['receiver_id']);
+        $message = trim($_POST['message']);
+        if ($receiver_id > 0 && $message !== '') {
+            $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
+            if ($stmt) {
+                $stmt->bind_param('iis', $user_id, $receiver_id, $message);
+                $stmt->execute();
+                $stmt->close();
+            }
+            header('Location: messages_inbox.php?view=' . $receiver_id);
+            exit;
+        }
+    }
+}
+
+// Fetch notifications from admin to this user
+$notifications = [];
+$stmt = $conn->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.message, m.is_read, m.created_at, s.username AS sender_name
+    FROM messages m
+    LEFT JOIN users s ON s.id = m.sender_id
+    WHERE m.receiver_id = ? AND s.role = 'admin'
+    ORDER BY m.created_at DESC");
+if ($stmt) {
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $notifications[] = $row;
+    }
+    $stmt->close();
+}
+
+// If view specified, show single notification/message and mark it read
+$view_id = isset($_GET['view']) ? intval($_GET['view']) : 0;
+$view_message = null;
+if ($view_id > 0) {
+    // mark as read if receiver is current user
+    $upd = $conn->prepare("UPDATE messages SET is_read = 1 WHERE id = ? AND receiver_id = ? AND is_read = 0");
+    if ($upd) { $upd->bind_param('ii', $view_id, $user_id); $upd->execute(); $upd->close(); }
+
+    $stmt2 = $conn->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.message, m.is_read, m.created_at, s.username AS sender_name
+        FROM messages m
+        LEFT JOIN users s ON s.id = m.sender_id
+        WHERE m.id = ? AND m.receiver_id = ? AND s.role = 'admin'");
+    if ($stmt2) {
+        $stmt2->bind_param('ii', $view_id, $user_id);
+        $stmt2->execute();
+        $res2 = $stmt2->get_result();
+        $view_message = $res2->fetch_assoc();
+        $stmt2->close();
+    }
+}
+
+function esc($s) {
+    return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+}
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -24,7 +112,6 @@ $username = $_SESSION['username'];
         .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
         .unread { background-color: #e7f3ff; font-weight: 600; border-left: 4px solid #667eea; }
         .message-item { cursor: pointer; transition: background 0.2s; }
-        .message-item:hover { background-color: #f8f9fa; }
         .conversation-msg { margin-bottom: 10px; padding: 10px; border-radius: 5px; }
         .msg-sender { background-color: #e7f3ff; text-align: left; }
         .msg-self { background-color: #d4edda; text-align: right; }
@@ -41,135 +128,42 @@ $username = $_SESSION['username'];
     <div class="row">
         <div class="col-md-4">
             <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-list"></i> Messages</h5>
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-bell"></i> Notifications</h5>
+                    <small class="text-white">From admin</small>
                 </div>
-                <div class="card-body p-0">
-                    <ul id="messageList" class="list-group list-group-flush"></ul>
+                <div class="card-body p-2">
+                    <form method="post" id="notifForm">
+                        <div class="mb-2 d-flex gap-2">
+                            <button type="submit" name="action" value="mark_read" class="btn btn-sm btn-success">Mark Selected Read</button>
+                            <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Delete selected notifications?')">Delete Selected</button>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <?php if (empty($notifications)): ?>
+                                <li class="list-group-item text-muted text-center">No notifications</li>
+                            <?php else: ?>
+                                <?php foreach ($notifications as $n): ?>
+                                    <?php $isUnread = intval($n['is_read']) === 0; ?>
+                                    <li class="list-group-item d-flex justify-content-between align-items-start p-2 <?php echo $isUnread ? 'unread' : ''; ?>">
+                                        <div style="flex:1">
+                                            <label style="display:block;">
+                                                <input type="checkbox" name="ids[]" value="<?php echo intval($n['id']); ?>"> 
+                                                <a href="?view=<?php echo intval($n['id']); ?>" class="text-decoration-none ms-2 <?php echo $isUnread ? 'fw-bold' : ''; ?>"><?php echo esc($n['sender_name']); ?> — <?php echo esc(substr($n['message'], 0, 80)); ?><?php echo (strlen($n['message'])>80)?'...':''; ?></a>
+                                            </label>
+                                            <p class="mb-0 small text-muted"><?php echo date('M j, Y H:i', strtotime($n['created_at'])); ?></p>
+                                        </div>
+                                    </li>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </ul>
+                    </form>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0"><i class="fas fa-comments"></i> Conversation</h5>
-                </div>
-                <div class="card-body" id="conversation" style="min-height: 300px; max-height: 400px; overflow-y: auto; background-color: #f9f9f9;">
-                    <p class="text-muted text-center">Select a message to view conversation</p>
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex gap-2">
-                        <button id="markReadBtn" class="btn btn-sm btn-primary"><i class="fas fa-check"></i> Mark Selected Read</button>
-                        <button id="deleteBtn" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Delete Selected</button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-const userId = <?php echo $user_id; ?>;
-
-async function loadInbox() {
-    const res = await fetch('get_messages.php');
-    const j = await res.json();
-    const list = document.getElementById('messageList');
-    list.innerHTML = '';
-    
-    if (!j.success || !j.messages.length) {
-        list.innerHTML = '<li class="list-group-item text-muted text-center">No messages</li>';
-        return;
-    }
-    
-    j.messages.forEach(m => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item message-item d-flex justify-content-between align-items-start p-3';
-        if (m.is_read == 0) li.classList.add('unread');
-        li.dataset.id = m.id;
-        li.dataset.senderId = m.sender_id;
-        
-        const date = new Date(m.created_at).toLocaleDateString();
-        li.innerHTML = `
-            <div style="flex:1">
-                <strong>${escapeHtml(m.sender_name || 'System')}</strong>
-                <p class="mb-0 small text-muted">${date}</p>
-            </div>
-            <input type="checkbox" class="msg-check" data-id="${m.id}">
-        `;
-        
-        li.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'INPUT') {
-                showConversation(m.sender_id);
-            }
-        });
-        list.appendChild(li);
-    });
-}
-
-async function showConversation(sender_id) {
-    const res = await fetch('get_messages.php?staff_id=' + sender_id);
-    const j = await res.json();
-    const conv = document.getElementById('conversation');
-    conv.innerHTML = '';
-    
-    if (!j.success || !j.messages.length) {
-        conv.innerHTML = '<p class="text-muted">No messages with this sender.</p>';
-        return;
-    }
-    
-    j.messages.forEach(m => {
-        const div = document.createElement('div');
-        div.className = 'conversation-msg ' + (m.sender_id == userId ? 'msg-self' : 'msg-sender');
-        const time = new Date(m.created_at).toLocaleTimeString();
-        div.innerHTML = `
-            <small class="d-block text-muted">${time}</small>
-            <p class="mb-1">${escapeHtml(m.message)}</p>
-        `;
-        conv.appendChild(div);
-    });
-
-    // Auto-mark as read
-    const idsToMark = j.messages.filter(x => x.receiver_id == userId && x.is_read == 0).map(x => x.id);
-    if (idsToMark.length) {
-        const params = new URLSearchParams();
-        idsToMark.forEach(i => params.append('ids[]', i));
-        await fetch('mark_read.php', { method: 'POST', body: params });
-        loadInbox();
-    }
-}
-
-document.getElementById('markReadBtn').addEventListener('click', async () => {
-    const checks = document.querySelectorAll('.msg-check:checked');
-    if (!checks.length) {
-        alert('Select messages first');
-        return;
-    }
-    const ids = [];
-    checks.forEach(c => ids.push(c.dataset.id));
-    const params = new URLSearchParams();
-    ids.forEach(i => params.append('ids[]', i));
-    
-    const res = await fetch('mark_read.php', { method: 'POST', body: params });
-    const j = await res.json();
-    if (j.success) {
-        loadInbox();
-        alert('Marked as read');
-    }
-});
-
-document.getElementById('deleteBtn').addEventListener('click', async () => {
-    alert('Delete feature coming soon');
-});
-
-function escapeHtml(text) {
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-loadInbox();
-setInterval(loadInbox, 10000); // refresh every 10 seconds
-</script>
 </body>
 </html>

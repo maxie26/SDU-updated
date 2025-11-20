@@ -259,3 +259,17 @@ COMMIT;
 -- LEFT JOIN trainings t ON ut.training_id = t.id
 -- WHERE u.role IN ('staff', 'head')
 -- GROUP BY u.id;
+
+
+CREATE TABLE IF NOT EXISTS `messages` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sender_id` int(11) NOT NULL,
+  `receiver_id` int(11) NOT NULL,
+  `message` text NOT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `receiver_id` (`receiver_id`),
+  KEY `sender_id` (`sender_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci; 
+
