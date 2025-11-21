@@ -258,13 +258,8 @@ if (!empty($office)) {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
-                    <i class="fas fa-user me-2"></i> <span>View Profile</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                    <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                    <i class="fas fa-user-circle me-2"></i> <span>Profile</span>
                 </a>
             </li>
             <li class="nav-item mt-auto">
@@ -278,8 +273,20 @@ if (!empty($office)) {
     <div class="main-content">
         <?php if ($view === 'overview'): ?>
             <div class="header mb-3">
-                <h1>Welcome, <?php echo htmlspecialchars($username); ?>!</h1>
-                <p>Your office: <strong><?php echo htmlspecialchars($office ?: 'Not set'); ?></strong></p>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h1 class="mb-1">Welcome, <?php echo htmlspecialchars($username); ?>!</h1>
+                        <p class="mb-0">Your office: <strong><?php echo htmlspecialchars($office ?: 'Not set'); ?></strong></p>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                            <i class="fas fa-user-circle me-2"></i> Profile
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#headBroadcastModal">
+                            <i class="fas fa-paper-plane me-2"></i> Notify My Staff
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="stats-cards">
                 <div class="card">
@@ -289,6 +296,33 @@ if (!empty($office)) {
                 <div class="card">
                     <h3>Completed Trainings (Office)</h3>
                     <p><?php echo $completed_trainings_in_office; ?></p>
+                </div>
+            </div>
+            <div class="row g-4 mb-4">
+                <div class="col-xl-6">
+                    <div class="content-box h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="mb-1">Total Attendance</h2>
+                                <p class="text-muted small mb-0">Completed trainings in your office</p>
+                            </div>
+                        </div>
+                        <canvas id="headAttendanceChart" height="160"></canvas>
+                    </div>
+                </div>
+                <div class="col-xl-3">
+                    <div class="content-box h-100">
+                        <h2 class="mb-3">Participation</h2>
+                        <canvas id="headParticipationChart" height="220"></canvas>
+                        <p class="text-center text-muted small mt-3">Active vs total staff</p>
+                    </div>
+                </div>
+                <div class="col-xl-3">
+                    <div class="content-box h-100">
+                        <h2 class="mb-3">Staff per Office</h2>
+                        <canvas id="staffPerOfficeChart" height="220"></canvas>
+                        <p class="text-center text-muted small mt-3">Organization-wide snapshot</p>
+                    </div>
                 </div>
             </div>
             <div class="content-box">
@@ -354,64 +388,160 @@ if (!empty($office)) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function(){
-            var btn = document.getElementById('sidebar-toggle');
-            if (btn) {
-                btn.addEventListener('click', function(){
-                    var b = document.getElementById('body') || document.body;
-                    b.classList.toggle('toggled');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function(){
+                    (document.getElementById('body') || document.body).classList.toggle('toggled');
                 });
             }
 
-            // Load View Profile into modal when opened
-            const viewProfileModal = document.getElementById('viewProfileModal');
-            if (viewProfileModal) {
-                viewProfileModal.addEventListener('show.bs.modal', function () {
-                    fetch('view_profile_api.php', { credentials: 'same-origin' })
-                        .then(r => r.text())
-                        .then(html => { document.getElementById('profileContent').innerHTML = html; })
-                        .catch(() => { document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Failed to load profile</div>'; });
-                });
+            if (document.getElementById('headAttendanceChart')) {
+                initHeadCharts();
             }
+            initHeadBroadcastForm();
+            initStaffTrainingButtons();
+            initAddTrainingForm();
+        });
 
-            // Load Edit Profile form into modal when opened
-            const attachSaveHandler = function() {
-                const profileForm = document.getElementById('profileForm');
-                const saveBtn = document.getElementById('saveProfileBtn');
-                if (!profileForm || !saveBtn) return;
-                const newBtn = saveBtn.cloneNode(true);
-                saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-                newBtn.addEventListener('click', function(){
-                    const formData = new FormData(profileForm);
-                    const feedback = document.getElementById('editProfileFeedback');
-                    fetch('edit_profile_api.php?action=save', { method: 'POST', body: formData, credentials: 'same-origin' })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
-                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); window.location.reload(); }, 1000);
-                            } else {
-                                feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
-                            }
-                        })
-                        .catch(() => { feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
-                });
-            };
+        let headAttendanceChart, headParticipationChart, staffPerOfficeChart;
 
-            const editProfileModal = document.getElementById('editProfileModal');
-            if (editProfileModal) {
-                editProfileModal.addEventListener('show.bs.modal', function () {
-                    fetch('edit_profile_api.php', { credentials: 'same-origin' })
-                        .then(r => r.text())
-                        .then(html => { document.getElementById('editProfileContent').innerHTML = html; attachSaveHandler(); })
-                        .catch(() => { document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load form</div>'; });
+        function initHeadCharts() {
+            fetch('dashboard_metrics_api.php?scope=head', { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(resp => {
+                    if (!resp.success) throw new Error('Failed to load metrics');
+                    renderHeadAttendance(resp.data.attendance);
+                    renderHeadParticipation(resp.data.participation);
+                    renderStaffPerOffice(resp.data.staffPerOffice);
+                })
+                .catch(() => {
+                    ['headAttendanceChart','headParticipationChart','staffPerOfficeChart'].forEach(id => {
+                        const canvas = document.getElementById(id);
+                        if (!canvas) return;
+                        const ctx = canvas.getContext('2d');
+                        ctx.font = '14px Inter';
+                        ctx.fillStyle = '#cbd5f5';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+                    });
                 });
+        }
+
+        function renderHeadAttendance(dataset) {
+            const ctx = document.getElementById('headAttendanceChart');
+            if (!ctx) return;
+            if (headAttendanceChart) headAttendanceChart.destroy();
+            headAttendanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataset.labels,
+                    datasets: [{
+                        label: 'Completed trainings',
+                        data: dataset.values,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56,189,248,0.15)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        function renderHeadParticipation(data) {
+            const ctx = document.getElementById('headParticipationChart');
+            if (!ctx) return;
+            if (headParticipationChart) headParticipationChart.destroy();
+            const inactive = Math.max((data.total || 0) - (data.active || 0), 0);
+            headParticipationChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Not active'],
+                    datasets: [{
+                        data: [data.active || 0, inactive],
+                        backgroundColor: ['#22c55e', '#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '68%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderStaffPerOffice(list) {
+            const ctx = document.getElementById('staffPerOfficeChart');
+            if (!ctx) return;
+            if (staffPerOfficeChart) staffPerOfficeChart.destroy();
+            const limited = Array.isArray(list) ? list.slice(0, 6) : [];
+            if (!limited.length) {
+                const c = ctx.getContext('2d');
+                c.font = '14px Inter';
+                c.fillStyle = '#cbd5f5';
+                c.textAlign = 'center';
+                c.fillText('No staffing data available', ctx.width / 2, ctx.height / 2);
+                return;
             }
+            staffPerOfficeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: limited.map(item => item.office),
+                    datasets: [{
+                        label: 'Staff count',
+                        data: limited.map(item => item.total),
+                        backgroundColor: '#f97316'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        }
 
-            // Staff trainings modal
+        function initHeadBroadcastForm() {
+            const form = document.getElementById('headBroadcastForm');
+            if (!form) return;
+            const feedback = document.getElementById('headBroadcastFeedback');
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                feedback.innerHTML = '';
+                const fd = new FormData(form);
+                fd.set('audience', 'office-staff');
+                fetch('send_notification.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(r => r.json())
+                    .then(resp => {
+                        if (resp.success) {
+                            feedback.innerHTML = '<div class="alert alert-success">Notification sent to your staff.</div>';
+                            form.reset();
+                            setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('headBroadcastModal')).hide(), 1000);
+                        } else {
+                            feedback.innerHTML = '<div class="alert alert-danger">' + (resp.error || 'Unable to send notification') + '</div>';
+                        }
+                    })
+                    .catch(() => {
+                        feedback.innerHTML = '<div class="alert alert-danger">Request failed. Please try again.</div>';
+                    })
+                    .finally(() => { submitBtn.disabled = false; });
+            });
+        }
+
+        function initStaffTrainingButtons() {
             const staffTrainingsModal = document.getElementById('staffTrainingsModal');
-            document.querySelectorAll('[data-view-trainings]')?.forEach(function(btn){
+            if (!staffTrainingsModal) return;
+            document.querySelectorAll('[data-view-trainings]').forEach(function(btn){
                 btn.addEventListener('click', function(){
                     const uid = this.getAttribute('data-user-id');
                     const body = document.getElementById('staffTrainingsContent');
@@ -424,28 +554,28 @@ if (!empty($office)) {
                         .catch(() => { body.innerHTML = '<div class="alert alert-danger">Failed to load trainings</div>'; });
                 });
             });
+        }
 
-            // Handle Add Training form submit
+        function initAddTrainingForm() {
             const addForm = document.getElementById('addTrainingForm');
-            if (addForm) {
-                addForm.addEventListener('submit', function(e){
-                    e.preventDefault();
-                    const fd = new FormData(addForm);
-                    fetch('training_api.php?action=create', { method: 'POST', body: fd, credentials: 'same-origin' })
-                        .then(r => r.json())
-                        .then(data => {
-                            const fb = document.getElementById('addTrainingFeedback');
-                            if (data.success) {
-                                fb.innerHTML = '<div class="alert alert-success">Training added!</div>';
-                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('addTrainingModal')).hide(); window.location.reload(); }, 800);
-                            } else {
-                                fb.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed') + '</div>';
-                            }
-                        })
-                        .catch(() => { document.getElementById('addTrainingFeedback').innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
-                });
-            }
-        });
+            if (!addForm) return;
+            addForm.addEventListener('submit', function(e){
+                e.preventDefault();
+                const fd = new FormData(addForm);
+                fetch('training_api.php?action=create', { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(r => r.json())
+                    .then(data => {
+                        const fb = document.getElementById('addTrainingFeedback');
+                        if (data.success) {
+                            fb.innerHTML = '<div class="alert alert-success">Training added!</div>';
+                            setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('addTrainingModal')).hide(); window.location.reload(); }, 800);
+                        } else {
+                            fb.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed') + '</div>';
+                        }
+                    })
+                    .catch(() => { document.getElementById('addTrainingFeedback').innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
+            });
+        }
     </script>
 
     <!-- Staff Trainings Modal -->
@@ -463,43 +593,28 @@ if (!empty($office)) {
             </div>
         </div>
     </div>
-    <!-- View Profile Modal -->
-    <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-hidden="true">
+    <!-- Notify Staff Modal -->
+    <div class="modal fade" id="headBroadcastModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">View Profile</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="profileContent">
-                    <div class="text-center py-4">
-                        <div class="spinner-border" role="status"></div>
+                <form id="headBroadcastForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-paper-plane me-2"></i>Notify Staff</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Profile Modal -->
-    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Profile</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="editProfileContent">
-                    <div class="text-center py-4">
-                        <div class="spinner-border" role="status"></div>
+                    <div class="modal-body">
+                        <p class="text-muted">This message will be delivered to all staff members assigned to your office.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" name="message" rows="5" required placeholder="Share updates, reminders, or acknowledgements"></textarea>
+                        </div>
+                        <div id="headBroadcastFeedback"></div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveProfileBtn" style="background-color: #1a237e; border-color: #1a237e;">Save Changes</button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-warning text-dark">Send</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -543,6 +658,15 @@ if (!empty($office)) {
             </div>
         </div>
     </div>
+
+    <?php include 'profile_modal.php'; ?>
+
+    <script>
+        // Initialize profile modal
+        if (typeof initProfileModal === 'function') {
+            initProfileModal('view');
+        }
+    </script>
 </body>
 </html>
 

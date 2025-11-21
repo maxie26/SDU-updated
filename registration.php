@@ -314,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
 
                     <div class="form-group">
-                        <label for="username">USERNAME</label>
+                        <label for="username">USERNAME <span class="text-danger">*</span></label>
                         <div class="input-with-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.685 10.567 10 8 10s-3.516.685-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
@@ -323,19 +323,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                     </div>
                     <div class="form-group" id="office-group" style="display:none;">
-                        <label for="office">OFFICE</label>
-                        <select id="office" name="office">
+                        <label for="office">OFFICE <span class="text-danger">*</span></label>
+                        <select id="office" name="office" required>
                             <option value="">Select your office</option>
-                            <option value="Ateneo Center for Culture & the Arts (ACCA)">Ateneo Center for Culture & the Arts (ACCA)</option>
-                            <option value="Ateneo Center for Environment & Sustainability (ACES)">Ateneo Center for Environment & Sustainability (ACES)</option>
-                            <option value="Ateneo Center for Leadership & Governance (ACLG)">Ateneo Center for Leadership & Governance (ACLG)</option>
-                            <option value="Ateneo Peace Institute (API)">Ateneo Peace Institute (API)</option>
-                            <option value="Center for Community Extension Services (CCES)">Center for Community Extension Services (CCES)</option>
-                            <option value="Ateneo Learning and Teaching Excellence Center (ALTEC)">Ateneo Learning and Teaching Excellence Center (ALTEC)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="email">EMAIL</label>
+                        <label for="email">EMAIL <span class="text-danger">*</span></label>
                         <div class="input-with-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 1v.76L8.14 9.172a.5.5 0 0 1-.284 0L1 4.76V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1"/>
@@ -344,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="password">PASSWORD</label>
+                        <label for="password">PASSWORD <span class="text-danger">*</span></label>
                         <div class="input-with-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 1 0-6 0v4a1 1 0 0 0-1 1v2a2 2 0 0 0 2 2v2a.5.5 0 0 0 1 0v-2a2 2 0 0 0 2-2V8a1 1 0 0 0-1-1M5.5 8.5a.5.5 0 0 1 1 0v2a.5.5 0 0 1-1 0z"/>
@@ -369,11 +363,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     const staffRadio = document.getElementById('staff');
     const headRadio = document.getElementById('head');
     const officeGroup = document.getElementById('office-group');
+    const officeSelect = document.getElementById('office');
+    
+    // Load offices dynamically
+    (async function() {
+        try {
+            const res = await fetch('offices_api.php');
+            const data = await res.json();
+            if (data.success && data.data) {
+                data.data.forEach(office => {
+                    const option = document.createElement('option');
+                    option.value = office.name;
+                    option.textContent = office.name;
+                    officeSelect.appendChild(option);
+                });
+            }
+        } catch (e) {
+            console.error('Failed to load offices:', e);
+        }
+    })();
+    
     function toggleOffice() {
         if (staffRadio.checked || headRadio.checked) {
             officeGroup.style.display = '';
+            officeSelect.required = true;
         } else {
             officeGroup.style.display = 'none';
+            officeSelect.required = false;
         }
     }
     [adminRadio, staffRadio, headRadio].forEach(r => r.addEventListener('change', toggleOffice));

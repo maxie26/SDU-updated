@@ -122,4 +122,23 @@ $user_data['job_function'] = !empty($user_data['job_function']) ? $user_data['jo
         </div>
     </div>
     <?php endif; ?>
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-primary" onclick="switchToEditMode()">
+            <i class="fas fa-edit me-2"></i> Edit Profile
+        </button>
+    </div>
 </div>
+
+<script>
+function switchToEditMode() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+    if (modal) {
+        modal.hide();
+        setTimeout(() => {
+            initProfileModal('edit');
+            const editModal = new bootstrap.Modal(document.getElementById('profileModal'));
+            editModal.show();
+        }, 300);
+    }
+}
+</script>

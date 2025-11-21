@@ -8,11 +8,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-$office_query = "SELECT DISTINCT office FROM staff_details WHERE office IS NOT NULL AND office != '' ORDER BY office";
+// Load offices dynamically from offices table
+$office_query = "SELECT name FROM offices WHERE is_active = 1 ORDER BY name";
 $office_result = $conn->query($office_query);
 $offices = [];
 if ($office_result) {
-    while ($r = $office_result->fetch_assoc()) { $offices[] = $r['office']; }
+    while ($r = $office_result->fetch_assoc()) { $offices[] = $r['name']; }
 }
 
 $selected_offices = isset($_GET['offices']) && is_array($_GET['offices']) ? array_filter($_GET['offices']) : [];
@@ -272,8 +273,23 @@ if (!empty($selected_offices)) {
             </div>
         </form>
 
+        <div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
+            <button type="button" class="btn btn-outline-secondary" id="printReport">
+                <i class="fas fa-print me-1"></i> Print
+            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-export me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><button class="dropdown-item" type="button" data-export="pdf"><i class="fas fa-file-pdf me-1 text-danger"></i> PDF</button></li>
+                    <li><button class="dropdown-item" type="button" data-export="excel"><i class="fas fa-file-excel me-1 text-success"></i> Excel</button></li>
+                </ul>
+            </div>
+        </div>
+
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped" id="directoryTable">
                 <thead>
                     <tr>
                         <th>Username</th>
@@ -308,6 +324,8 @@ if (!empty($selected_offices)) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script>
     (function(){
         const form = document.getElementById('filtersForm');
@@ -353,6 +371,71 @@ if (!empty($selected_offices)) {
         // initial
         syncAllState();
         updateButtonLabel();
+    })();
+
+    (function(){
+        const table = document.getElementById('directoryTable');
+        const printBtn = document.getElementById('printReport');
+        const exportMenu = document.querySelectorAll('[data-export]');
+
+        if (printBtn && table) {
+            printBtn.addEventListener('click', function(){
+                const printWindow = window.open('', '', 'width=1200,height=900');
+                if (!printWindow) return;
+                const doc = printWindow.document;
+                doc.write('<html><head><title>Directory & Reports</title>');
+                doc.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">');
+                doc.write('</head><body class="p-4">');
+                doc.write('<h3>Directory & Reports</h3>');
+                doc.write(table.outerHTML);
+                doc.write('</body></html>');
+                doc.close();
+                printWindow.focus();
+                printWindow.onload = () => printWindow.print();
+            });
+        }
+
+        function exportToCSV() {
+            if (!table) return;
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const csv = rows.map(row => {
+                return Array.from(row.querySelectorAll('th,td'))
+                    .map(cell => `"${cell.innerText.replace(/"/g, '""')}"`)
+                    .join(',');
+            }).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'directory-report.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportToPDF() {
+            if (!table || !window.jspdf || !window.jspdf.jsPDF) return;
+            const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+            doc.setFontSize(16);
+            doc.text('Directory & Reports', 40, 40);
+            doc.autoTable({
+                html: '#directoryTable',
+                startY: 60,
+                styles: { fontSize: 8, cellPadding: 4 },
+                headStyles: { fillColor: [26, 35, 126] }
+            });
+            doc.save('directory-report.pdf');
+        }
+
+        exportMenu.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-export');
+                if (type === 'excel') {
+                    exportToCSV();
+                } else if (type === 'pdf') {
+                    exportToPDF();
+                }
+            });
+        });
     })();
 </script>
 </body>

@@ -140,6 +140,10 @@ if ($view === 'training-records') {
             border-radius: 5px;
             margin: 5px 15px;
             transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.75rem;
         }
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
             background-color: #3f51b5;
@@ -358,17 +362,15 @@ if ($view === 'training-records') {
                     <i class="fas fa-book-open me-2"></i> <span>Training Records</span>
                 </a>
             </li>
-            <a href="messages_inbox.php" class="nav-link">
-    <i class="fas fa-inbox"></i> Inbox <span id="unreadBadge" class="badge bg-danger"></span>
-</a>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
-                    <i class="fas fa-user me-2"></i> <span>View Profile</span>
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                    <i class="fas fa-bell me-2"></i> <span>Notifications</span>
+                    <span id="unreadBadge" class="badge bg-danger ms-2" style="display:none;"></span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                    <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                    <i class="fas fa-user-circle me-2"></i> <span>Profile</span>
                 </a>
             </li>
             <li class="nav-item mt-auto">
@@ -382,8 +384,21 @@ if ($view === 'training-records') {
     <div class="main-content">
         <?php if ($view === 'overview'): ?>
             <div class="header mb-4">
-                <h1 class="text-dark fw-bold mb-2">Welcome, <?php echo htmlspecialchars($staff_username); ?>!</h1>
-                <p class="text-white-50 mb-0">Manage your training records and track your progress.</p>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h1 class="text-dark fw-bold mb-2">Welcome, <?php echo htmlspecialchars($staff_username); ?>!</h1>
+                        <p class="text-white-50 mb-0">Manage your training records and track your progress.</p>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                            <i class="fas fa-user-circle me-2"></i> Profile
+                        </button>
+                        <button class="btn btn-primary position-relative" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                            <i class="fas fa-bell me-2"></i> Notifications
+                            <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;"></span>
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="stats-cards">
@@ -404,15 +419,15 @@ if ($view === 'training-records') {
                     <h4>Add Training</h4>
                     <p>Record a new training</p>
                 </div>
-                <div class="action-card" data-bs-toggle="modal" data-bs-target="#viewProfileModal" style="cursor:pointer;">
+                <div class="action-card" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')" style="cursor:pointer;">
                     <i class="fas fa-user"></i>
                     <h4>View Profile</h4>
-                    <p>Check your information</p>
+                    <p>Manage your information</p>
                 </div>
-                <div class="action-card" onclick="window.location.href='?view=training-records'" style="cursor:pointer;">
+                <div class="action-card" data-bs-toggle="modal" data-bs-target="#trainingRecordsModal" style="cursor:pointer;">
                     <i class="fas fa-book-open"></i>
                     <h4>Training Records</h4>
-                    <p>Manage your trainings</p>
+                    <p>Review your records instantly</p>
                 </div>
             </div>
 
@@ -697,92 +712,80 @@ if ($view === 'training-records') {
                 });
             }
 
-            // View Profile Modal
-            const viewProfileModal = document.getElementById('viewProfileModal');
-            if (viewProfileModal) {
-                viewProfileModal.addEventListener('show.bs.modal', function () {
-                    // Load profile data via AJAX
-                    fetch('view_profile_api.php', { credentials: 'same-origin' })
-                        .then(response => response.text())
-                        .then(data => {
-                            document.getElementById('profileContent').innerHTML = data;
-                        })
-                        .catch(error => {
-                            document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Failed to load profile data</div>';
-                        });
-                });
-            }
-
-            // Edit Profile Modal
-            const attachSaveHandler = function() {
-                const profileForm = document.getElementById('profileForm');
-                const saveBtn = document.getElementById('saveProfileBtn');
-                if (!profileForm || !saveBtn) return;
-                // Remove previous listener by cloning
-                const newBtn = saveBtn.cloneNode(true);
-                saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-                newBtn.addEventListener('click', function(){
-                    const formData = new FormData(profileForm);
-                    const feedback = document.getElementById('editProfileFeedback');
-                    fetch('edit_profile_api.php?action=save', { method: 'POST', body: formData, credentials: 'same-origin' })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
-                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); window.location.reload(); }, 1000);
-                            } else {
-                                feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
-                            }
-                        })
-                        .catch(() => { feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
-                });
-            };
-
-            const editProfileModal = document.getElementById('editProfileModal');
-            if (editProfileModal) {
-                editProfileModal.addEventListener('show.bs.modal', function () {
-                    fetch('edit_profile_api.php', { credentials: 'same-origin' })
+            // Training records modal loader
+            const trainingRecordsModal = document.getElementById('trainingRecordsModal');
+            if (trainingRecordsModal) {
+                trainingRecordsModal.addEventListener('show.bs.modal', function () {
+                    const container = document.getElementById('trainingRecordsContent');
+                    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+                    fetch('training_records_api.php', { credentials: 'same-origin' })
                         .then(response => response.text())
                         .then(html => {
-                            document.getElementById('editProfileContent').innerHTML = html;
-                            attachSaveHandler();
+                            container.innerHTML = html;
                         })
                         .catch(() => {
-                            document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load edit form</div>';
+                            container.innerHTML = '<div class="alert alert-danger">Unable to load training records.</div>';
                         });
                 });
             }
 
         });
         // Update unread count on staff dashboard
-async function updateUnreadCount() {
-    const res = await fetch('get_unread_count.php');
-    const j = await res.json();
-    const badge = document.getElementById('unreadBadge');
-    if (j.count > 0) {
-        badge.textContent = j.count;
-        badge.style.display = 'inline-block';
-    } else {
-        badge.style.display = 'none';
-    }
-}
-updateUnreadCount();
-setInterval(updateUnreadCount, 5000);
+        async function updateUnreadCount() {
+            const res = await fetch('get_unread_count.php');
+            const j = await res.json();
+            const badge = document.getElementById('unreadBadge');
+            const topBadge = document.getElementById('notificationBadge');
+            if (j.count > 0) {
+                if (badge) {
+                    badge.textContent = j.count;
+                    badge.style.display = 'inline-block';
+                }
+                if (topBadge) {
+                    topBadge.textContent = j.count;
+                    topBadge.style.display = 'block';
+                }
+            } else {
+                if (badge) badge.style.display = 'none';
+                if (topBadge) topBadge.style.display = 'none';
+            }
+        }
+        updateUnreadCount();
+        setInterval(updateUnreadCount, 5000);
     </script>
 
-    <!-- View Profile Modal -->
-    <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-labelledby="viewProfileModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <!-- Training Records Modal -->
+    <div class="modal fade" id="trainingRecordsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="viewProfileModalLabel">View Profile</h5>
+                    <h5 class="modal-title"><i class="fas fa-book-reader me-2"></i>Your Training Records</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="profileContent">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
+                <div class="modal-body" id="trainingRecordsContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <small class="text-muted">Need more space? <a href="?view=training-records">Open the full page</a></small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-bell me-2"></i>Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="notificationsContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -792,28 +795,31 @@ setInterval(updateUnreadCount, 5000);
         </div>
     </div>
 
-    <!-- Edit Profile Modal -->
-    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="editProfileContent">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveProfileBtn" style="background-color: #1a237e; border-color: #1a237e;">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php include 'profile_modal.php'; ?>
+
+    <script>
+        // Load notifications modal
+        const notificationsModal = document.getElementById('notificationsModal');
+        if (notificationsModal) {
+            notificationsModal.addEventListener('show.bs.modal', function () {
+                const container = document.getElementById('notificationsContent');
+                container.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+                fetch('notifications_api.php', { credentials: 'same-origin' })
+                    .then(response => response.text())
+                    .then(html => {
+                        container.innerHTML = html;
+                    })
+                    .catch(() => {
+                        container.innerHTML = '<div class="alert alert-danger">Unable to load notifications.</div>';
+                    });
+            });
+        }
+
+        // Initialize profile modal
+        if (typeof initProfileModal === 'function') {
+            initProfileModal('view');
+        }
+    </script>
 
 </body>
 </html>

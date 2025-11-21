@@ -55,12 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch notifications from admin to this user
+// Fetch notifications sent to this user
 $notifications = [];
-$stmt = $conn->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.message, m.is_read, m.created_at, s.username AS sender_name
+$stmt = $conn->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.message, m.is_read, m.created_at, 
+    COALESCE(s.username, 'System') AS sender_name,
+    s.role AS sender_role
     FROM messages m
     LEFT JOIN users s ON s.id = m.sender_id
-    WHERE m.receiver_id = ? AND s.role = 'admin'
+    WHERE m.receiver_id = ?
     ORDER BY m.created_at DESC");
 if ($stmt) {
     $stmt->bind_param('i', $user_id);
@@ -80,10 +82,11 @@ if ($view_id > 0) {
     $upd = $conn->prepare("UPDATE messages SET is_read = 1 WHERE id = ? AND receiver_id = ? AND is_read = 0");
     if ($upd) { $upd->bind_param('ii', $view_id, $user_id); $upd->execute(); $upd->close(); }
 
-    $stmt2 = $conn->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.message, m.is_read, m.created_at, s.username AS sender_name
+    $stmt2 = $conn->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.message, m.is_read, m.created_at, COALESCE(s.username,'System') AS sender_name,
+        s.role AS sender_role
         FROM messages m
         LEFT JOIN users s ON s.id = m.sender_id
-        WHERE m.id = ? AND m.receiver_id = ? AND s.role = 'admin'");
+        WHERE m.id = ? AND m.receiver_id = ?");
     if ($stmt2) {
         $stmt2->bind_param('ii', $view_id, $user_id);
         $stmt2->execute();
@@ -127,10 +130,10 @@ function esc($s) {
 
     <div class="row">
         <div class="col-md-4">
-            <div class="card">
+                <div class="card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-bell"></i> Notifications</h5>
-                    <small class="text-white">From admin</small>
+                    <small class="text-white">Admins & office heads</small>
                 </div>
                 <div class="card-body p-2">
                     <form method="post" id="notifForm">
@@ -148,7 +151,13 @@ function esc($s) {
                                         <div style="flex:1">
                                             <label style="display:block;">
                                                 <input type="checkbox" name="ids[]" value="<?php echo intval($n['id']); ?>"> 
-                                                <a href="?view=<?php echo intval($n['id']); ?>" class="text-decoration-none ms-2 <?php echo $isUnread ? 'fw-bold' : ''; ?>"><?php echo esc($n['sender_name']); ?> — <?php echo esc(substr($n['message'], 0, 80)); ?><?php echo (strlen($n['message'])>80)?'...':''; ?></a>
+                                                <a href="?view=<?php echo intval($n['id']); ?>" class="text-decoration-none ms-2 <?php echo $isUnread ? 'fw-bold' : ''; ?>">
+                                                    <?php echo esc($n['sender_name']); ?>
+                                                    <?php if (!empty($n['sender_role'])): ?>
+                                                        <span class="badge bg-secondary ms-1 text-uppercase"><?php echo esc($n['sender_role']); ?></span>
+                                                    <?php endif; ?>
+                                                    — <?php echo esc(substr($n['message'], 0, 80)); ?><?php echo (strlen($n['message'])>80)?'...':''; ?>
+                                                </a>
                                             </label>
                                             <p class="mb-0 small text-muted"><?php echo date('M j, Y H:i', strtotime($n['created_at'])); ?></p>
                                         </div>

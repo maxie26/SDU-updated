@@ -17,9 +17,23 @@ $user_id = $_SESSION['user_id'];
 if (isset($_GET['action']) && $_GET['action'] === 'save') {
     header('Content-Type: application/json');
     
-    $email = $_POST['email'];
-    $position = isset($_POST['position']) ? $_POST['position'] : '';
-    $job_function = isset($_POST['job_function']) ? $_POST['job_function'] : '';
+    // Validate required fields
+    if (!isset($_POST['email']) || empty(trim($_POST['email']))) {
+        echo json_encode(['success' => false, 'error' => 'Email address is required.']);
+        exit();
+    }
+    
+    $email = trim($_POST['email']);
+    
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'error' => 'Invalid email format.']);
+        exit();
+    }
+    
+    $position = isset($_POST['position']) ? trim($_POST['position']) : '';
+    $job_function = isset($_POST['job_function']) ? trim($_POST['job_function']) : '';
+    $office = isset($_POST['office']) ? trim($_POST['office']) : '';
     $new_password = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
 
     $conn->begin_transaction();
@@ -39,6 +53,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
         }
         $stmt_user->close();
 
+        // Update staff_details for staff and head roles
         if ($_SESSION['role'] !== 'admin') {
             $stmt_check = $conn->prepare("SELECT user_id FROM staff_details WHERE user_id = ?");
             $stmt_check->bind_param("i", $user_id);
@@ -46,15 +61,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
             $result_check = $stmt_check->get_result();
 
             if ($result_check->num_rows > 0) {
-                $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, job_function = ? WHERE user_id = ?");
-                $stmt_details->bind_param("ssi", $position, $job_function, $user_id);
+                $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, job_function = ?, office = ? WHERE user_id = ?");
+                $stmt_details->bind_param("sssi", $position, $job_function, $office, $user_id);
                 if (!$stmt_details->execute()) {
                     throw new Exception("Error updating staff details: " . $stmt_details->error);
                 }
                 $stmt_details->close();
             } else {
-                $stmt_details = $conn->prepare("INSERT INTO staff_details (user_id, position, job_function) VALUES (?, ?, ?)");
-                $stmt_details->bind_param("iss", $user_id, $position, $job_function);
+                $stmt_details = $conn->prepare("INSERT INTO staff_details (user_id, position, job_function, office) VALUES (?, ?, ?, ?)");
+                $stmt_details->bind_param("isss", $user_id, $position, $job_function, $office);
                 if (!$stmt_details->execute()) {
                     throw new Exception("Error inserting staff details: " . $stmt_details->error);
                 }
@@ -72,7 +87,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
     exit();
 }
 
-$stmt_fetch = $conn->prepare("SELECT u.email, s.position, s.job_function FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.id = ?");
+$stmt_fetch = $conn->prepare("SELECT u.email, s.position, s.job_function, s.office FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.id = ?");
 $stmt_fetch->bind_param("i", $user_id);
 $stmt_fetch->execute();
 $result_fetch = $stmt_fetch->get_result();
@@ -87,12 +102,13 @@ if (!$user_data) {
 $user_data['email'] = $user_data['email'] ?? '';
 $user_data['position'] = $user_data['position'] ?? '';
 $user_data['job_function'] = $user_data['job_function'] ?? '';
+$user_data['office'] = $user_data['office'] ?? '';
 ?>
 
 <div id="editProfileForm">
     <form id="profileForm">
         <div class="mb-3">
-            <label for="modal_email" class="form-label">Email Address</label>
+            <label for="modal_email" class="form-label">Email Address <span class="text-danger">*</span></label>
             <input type="email" class="form-control" id="modal_email" name="email" value="<?php echo htmlspecialchars($user_data['email']); ?>" required>
         </div>
         
@@ -104,6 +120,12 @@ $user_data['job_function'] = $user_data['job_function'] ?? '';
         <div class="mb-3">
             <label for="modal_job_function" class="form-label">Job Function</label>
             <input type="text" class="form-control" id="modal_job_function" name="job_function" value="<?php echo htmlspecialchars($user_data['job_function']); ?>">
+        </div>
+        <div class="mb-3">
+            <label for="modal_office" class="form-label">Office</label>
+            <select class="form-select" id="modal_office" name="office">
+                <option value="">Select Office</option>
+            </select>
         </div>
         
         <?php endif; ?>
@@ -117,6 +139,33 @@ $user_data['job_function'] = $user_data['job_function'] ?? '';
         <div id="editProfileFeedback"></div>
     </form>
 </div>
+
+<script>
+// Load offices dynamically
+(async function() {
+    try {
+        const res = await fetch('offices_api.php');
+        const data = await res.json();
+        if (data.success && data.data) {
+            const select = document.getElementById('modal_office');
+            if (select) {
+                const currentOffice = '<?php echo htmlspecialchars($user_data['office']); ?>';
+                data.data.forEach(office => {
+                    const option = document.createElement('option');
+                    option.value = office.name;
+                    option.textContent = office.name;
+                    if (office.name === currentOffice) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load offices:', e);
+    }
+})();
+</script>
 
 <script>
 
@@ -139,7 +188,8 @@ $user_data['job_function'] = $user_data['job_function'] ?? '';
                 if (data.success) {
                     feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
                     setTimeout(() => {
-                        bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide();
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+                        if (modal) modal.hide();
                         window.location.reload();
                     }, 1500);
                 } else {

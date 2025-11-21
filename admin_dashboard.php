@@ -404,10 +404,10 @@ $active_programs = 0;
                     <a class="nav-link" href="staff_report.php">Directory & Reports</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="view_profile.php">View Profile</a>
+                    <a class="nav-link" href="admin_messages.php">Messaging</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="edit_profile.php">Edit Profile</a>
+                    <a class="nav-link" href="view_profile.php">Profile</a>
                 </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link" href="logout.php">Logout</a>
@@ -436,18 +436,8 @@ $active_programs = 0;
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="admin_messages.php">
-                    <i class="fas fa-envelope me-2"></i> <span>Messaging</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#viewProfileModal">
-                    <i class="fas fa-user me-2"></i> <span>View Profile</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                    <i class="fas fa-user-edit me-2"></i> <span>Edit Profile</span>
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                    <i class="fas fa-user-circle me-2"></i> <span>Profile</span>
                 </a>
             </li>
             <li class="nav-item mt-auto">
@@ -467,8 +457,20 @@ $active_programs = 0;
 
         <?php if ($view === 'overview'): ?>
             <div class="header mb-4">
-                <h1 class="fw-bold mb-2" style="color: #1e293b;">Welcome, <?php echo htmlspecialchars($admin_username); ?>!</h1>
-                <p class="mb-0" style="color: #6b7280;">Here's what's happening with your organization today.</p>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h1 class="fw-bold mb-2" style="color: #1e293b;">Welcome, <?php echo htmlspecialchars($admin_username); ?>!</h1>
+                        <p class="mb-0" style="color: #6b7280;">Here's what's happening with your organization today.</p>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                            <i class="fas fa-user-circle me-2"></i> Profile
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#broadcastModal">
+                            <i class="fas fa-bullhorn me-2"></i> Send Notification
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="stats-cards">
                 <div class="card">
@@ -484,6 +486,34 @@ $active_programs = 0;
                     <p><?php echo $trainings_completed; ?></p>
                 </div>
             </div>
+            <div class="row g-4 mb-4">
+                <div class="col-xl-6">
+                    <div class="content-box h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="mb-1">Total Attendance</h2>
+                                <p class="text-muted small mb-0">Completed trainings across the last 6 months</p>
+                            </div>
+                            <span class="badge bg-primary">Live</span>
+                        </div>
+                        <canvas id="attendanceChart" height="160"></canvas>
+                    </div>
+                </div>
+                <div class="col-xl-3">
+                    <div class="content-box h-100">
+                        <h2 class="mb-3">Participation</h2>
+                        <canvas id="participationChart" height="220"></canvas>
+                        <p class="text-center text-muted small mt-3">Active members vs overall staff</p>
+                    </div>
+                </div>
+                <div class="col-xl-3">
+                    <div class="content-box h-100">
+                        <h2 class="mb-3">Number of Heads</h2>
+                        <canvas id="headsChart" height="220"></canvas>
+                        <p class="text-center text-muted small mt-3">Distribution per office</p>
+                    </div>
+                </div>
+            </div>
         <?php elseif ($view === 'directory'): ?>
             <div class="content-box">
                 <h2>Directory & Reports</h2>
@@ -496,49 +526,49 @@ $active_programs = 0;
         <?php endif; ?>
     </div>
     
-    <!-- View Profile Modal -->
-    <div class="modal fade" id="viewProfileModal" tabindex="-1" aria-hidden="true">
+    <!-- Broadcast Notification Modal -->
+    <div class="modal fade" id="broadcastModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">View Profile</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="profileContent">
-                    <div class="text-center py-4">
-                        <div class="spinner-border" role="status"></div>
+                <form id="broadcastForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-bullhorn me-2"></i>Send Notification</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label">Audience</label>
+                                <select class="form-select" name="audience" required>
+                                    <option value="all">All Users</option>
+                                    <option value="staff">Staff Only</option>
+                                    <option value="heads">Office Heads Only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label">Subject (optional)</label>
+                                <input type="text" class="form-control" name="subject" placeholder="Optional subject line">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" name="message" rows="5" placeholder="Share updates, reminders, or announcements" required></textarea>
+                        </div>
+                        <div id="broadcastFeedback" class="mt-3"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Edit Profile Modal -->
-    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Profile</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="editProfileContent">
-                    <div class="text-center py-4">
-                        <div class="spinner-border" role="status"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveProfileBtn" style="background-color: #1a237e; border-color: #1a237e;">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php include 'profile_modal.php'; ?>
 
-    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const sidebarToggleBtn = document.getElementById('sidebar-toggle');
@@ -549,54 +579,15 @@ $active_programs = 0;
                 });
             }
 
-            // Load View Profile modal content
-            const viewProfileModal = document.getElementById('viewProfileModal');
-            if (viewProfileModal) {
-                viewProfileModal.addEventListener('show.bs.modal', function () {
-                    fetch('view_profile_api.php', { credentials: 'same-origin' })
-                        .then(r => r.text())
-                        .then(html => { document.getElementById('profileContent').innerHTML = html; })
-                        .catch(() => { document.getElementById('profileContent').innerHTML = '<div class="alert alert-danger">Failed to load profile</div>'; });
-                });
+            if (document.getElementById('attendanceChart')) {
+                initAdminCharts();
             }
-
-            // Load Edit Profile form into modal and handle save
-            const attachSaveHandler = function() {
-                const profileForm = document.getElementById('profileForm');
-                const saveBtn = document.getElementById('saveProfileBtn');
-                if (!profileForm || !saveBtn) return;
-                const newBtn = saveBtn.cloneNode(true);
-                saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-                newBtn.addEventListener('click', function(){
-                    const formData = new FormData(profileForm);
-                    const feedback = document.getElementById('editProfileFeedback');
-                    fetch('edit_profile_api.php?action=save', { method: 'POST', body: formData, credentials: 'same-origin' })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
-                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); window.location.reload(); }, 1000);
-                            } else {
-                                feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
-                            }
-                        })
-                        .catch(() => { feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
-                });
-            };
-
-            const editProfileModal = document.getElementById('editProfileModal');
-            if (editProfileModal) {
-                editProfileModal.addEventListener('show.bs.modal', function () {
-                    fetch('edit_profile_api.php', { credentials: 'same-origin' })
-                        .then(r => r.text())
-                        .then(html => { document.getElementById('editProfileContent').innerHTML = html; attachSaveHandler(); })
-                        .catch(() => { document.getElementById('editProfileContent').innerHTML = '<div class="alert alert-danger">Failed to load form</div>'; });
-                });
-            }
+            initBroadcastForm();
 
             // Load Directory & Reports content when directory view is active
             const directoryContent = document.getElementById('directoryContent');
             function loadDirectory(queryString) {
+                if (!directoryContent) return;
                 const qs = queryString ? ('?' + queryString) : '?embed=1';
                 const url = qs.includes('embed=1') ? ('staff_report.php' + (qs.startsWith('?') ? qs : ('?' + qs)))
                                                    : ('staff_report.php?embed=1' + (qs ? ('&' + qs.replace(/^\?/, '')) : ''));
@@ -611,11 +602,11 @@ $active_programs = 0;
             }
 
             function attachDirectoryHandlers() {
+                if (!directoryContent) return;
                 const form = directoryContent.querySelector('#filtersForm');
                 if (!form) return;
                 form.addEventListener('submit', function(e){
                     e.preventDefault();
-                    // gather params
                     const role = directoryContent.querySelector('#role')?.value || '';
                     const period = directoryContent.querySelector('#period')?.value || '';
                     const officeChecks = Array.from(directoryContent.querySelectorAll('.office-check'));
@@ -633,6 +624,162 @@ $active_programs = 0;
                 loadDirectory('embed=1');
             }
         });
+
+        let attendanceChartInstance, participationChartInstance, headsChartInstance;
+
+        function initAdminCharts() {
+            fetch('dashboard_metrics_api.php?scope=admin', { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(resp => {
+                    if (!resp.success) throw new Error('Failed to load metrics');
+                    renderAttendance(resp.data.attendance);
+                    renderParticipation(resp.data.participation);
+                    renderHeads(resp.data.heads);
+                })
+                .catch(() => {
+                    const placeholders = ['attendanceChart','participationChart','headsChart'];
+                    placeholders.forEach(id => {
+                        const canvas = document.getElementById(id);
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.font = '14px Inter';
+                            ctx.fillStyle = '#94a3b8';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Unable to load chart data', canvas.width / 2, canvas.height / 2);
+                        }
+                    });
+                });
+        }
+
+        function renderAttendance(dataset) {
+            const ctx = document.getElementById('attendanceChart');
+            if (!ctx) return;
+            if (attendanceChartInstance) attendanceChartInstance.destroy();
+            attendanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataset.labels,
+                    datasets: [{
+                        label: 'Completed trainings',
+                        data: dataset.values,
+                        fill: true,
+                        borderColor: '#1a237e',
+                        backgroundColor: 'rgba(26,35,126,0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#1a237e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision:0 } }
+                    }
+                }
+            });
+        }
+
+        function renderParticipation(data) {
+            const ctx = document.getElementById('participationChart');
+            if (!ctx) return;
+            if (participationChartInstance) participationChartInstance.destroy();
+            const inactive = Math.max(data.total - data.active, 0);
+            participationChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Not yet engaged'],
+                    datasets: [{
+                        data: [data.active, inactive],
+                        backgroundColor: ['#22c55e', '#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function renderHeads(data) {
+            const ctx = document.getElementById('headsChart');
+            if (!ctx) return;
+            if (headsChartInstance) headsChartInstance.destroy();
+            const offices = Array.isArray(data?.byOffice) ? data.byOffice.slice(0, 6) : [];
+            if (!offices.length) {
+                const context = ctx.getContext('2d');
+                context.clearRect(0, 0, ctx.width, ctx.height);
+                context.font = '14px Inter';
+                context.fillStyle = '#94a3b8';
+                context.textAlign = 'center';
+                context.fillText('No headcount data yet', ctx.width / 2, ctx.height / 2);
+                return;
+            }
+            headsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: offices.map(o => o.office),
+                    datasets: [{
+                        label: 'Heads',
+                        data: offices.map(o => o.total),
+                        backgroundColor: '#a855f7'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision:0 } }
+                    }
+                }
+            });
+        }
+
+        function initBroadcastForm() {
+            const form = document.getElementById('broadcastForm');
+            if (!form) return;
+            const feedback = document.getElementById('broadcastFeedback');
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                feedback.innerHTML = '';
+                const formData = new FormData(form);
+                const subject = (formData.get('subject') || '').trim();
+                const body = (formData.get('message') || '').trim();
+                const composed = subject ? (subject + '\n\n' + body) : body;
+                formData.set('message', composed);
+                formData.delete('subject');
+                fetch('send_notification.php', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json())
+                .then(resp => {
+                    if (resp.success) {
+                        feedback.innerHTML = '<div class="alert alert-success">Notification sent (' + (resp.count || 0) + ' recipients).</div>';
+                        form.reset();
+                        setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('broadcastModal')).hide(), 1200);
+                    } else {
+                        feedback.innerHTML = '<div class="alert alert-danger">' + (resp.error || 'Unable to send notification') + '</div>';
+                    }
+                })
+                .catch(() => {
+                    feedback.innerHTML = '<div class="alert alert-danger">Request failed. Please try again.</div>';
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+
+        // Initialize profile modal
+        if (typeof initProfileModal === 'function') {
+            initProfileModal('view');
+        }
     </script>
 </body>
 </html>
