@@ -369,7 +369,7 @@ if ($view === 'training-records') {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                <a class="nav-link" href="edit_profile_api.php" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
                     <i class="fas fa-user-circle me-2"></i> <span>Profile</span>
                 </a>
             </li>

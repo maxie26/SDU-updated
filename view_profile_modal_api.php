@@ -148,6 +148,10 @@ $stmt_upcoming->close();
                 <div class="info-chip"><?php echo $user_data['position'] ? htmlspecialchars($user_data['position']) : 'Not specified'; ?></div>
             </div>
             <div class="mb-3">
+                <label class="text-uppercase text-muted small mb-1">Program</label>
+                <div class="info-chip"><?php echo $user_data['program'] ? htmlspecialchars($user_data['program']) : 'Not specified'; ?></div>
+            </div>
+            <div class="mb-3">
                 <label class="text-uppercase text-muted small mb-1">Job Function</label>
                 <div class="info-chip"><?php echo $user_data['job_function'] ? htmlspecialchars($user_data['job_function']) : 'Not specified'; ?></div>
             </div>
@@ -195,6 +199,10 @@ $stmt_upcoming->close();
                         <input type="text" class="form-control" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>">
                     </div>
                     <div class="col-md-6">
+                        <label class="form-label">Program</label>
+                        <input type="text" class="form-control" name="program" value="<?php echo htmlspecialchars($user_data['program']); ?>">
+                    </div>
+                    <div class="col-md-6">
                         <label class="form-label">Job Function</label>
                         <input type="text" class="form-control" name="job_function" value="<?php echo htmlspecialchars($user_data['job_function']); ?>">
                     </div>
@@ -230,6 +238,7 @@ $stmt_upcoming->close();
 const originalFormValues = {
     email: '<?php echo htmlspecialchars($user_data['email'], ENT_QUOTES); ?>',
     position: '<?php echo htmlspecialchars($user_data['position'] ?? '', ENT_QUOTES); ?>',
+    program: '<?php echo htmlspecialchars($user_data['program'] ?? '', ENT_QUOTES); ?>',
     job_function: '<?php echo htmlspecialchars($user_data['job_function'] ?? '', ENT_QUOTES); ?>',
     office: '<?php echo htmlspecialchars($user_data['office'] ?? '', ENT_QUOTES); ?>',
     new_password: ''
