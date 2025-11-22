@@ -381,7 +381,7 @@ if ($view === 'training-records') {
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
                         <h1 class="text-dark fw-bold mb-2">Welcome, <?php echo htmlspecialchars($staff_username); ?>!</h1>
-                        <p class="text-white-50 mb-0">Manage your training records and track your progress.</p>
+                        <p class="mb-0" style="color: #6b7280;">Manage your training records and track your progress.</p>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
                         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">

@@ -160,12 +160,7 @@ $stmt_upcoming->close();
                 <div class="info-chip"><?php echo $user_data['office'] ? htmlspecialchars($user_data['office']) : 'Not specified'; ?></div>
             </div>
             <?php endif; ?>
-            <div class="mb-4">
-                <label class="text-uppercase text-muted small mb-1">Member since</label>
-                <div class="info-chip">
-                    <?php echo $user_data['created_at'] ? date('M d, Y', strtotime($user_data['created_at'])) : 'Not available'; ?>
-                </div>
-            </div>
+    
             <?php if ($role !== 'admin'): ?>
             <div class="row g-3">
                 <div class="col-6">

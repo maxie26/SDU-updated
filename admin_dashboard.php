@@ -390,39 +390,11 @@ $active_programs = 0;
 </head>
 <body id="body">
 
-    <div class="offcanvas offcanvas-start bg-dark text-white d-lg-none" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasNavbarLabel">SDU Admin</h5>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-                <li class="nav-item">
-                    <a class="nav-link <?= $view === 'overview' ? 'active' : '' ?>" href="?view=overview">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="staff_report.php">Directory & Reports</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="admin_messages.php">Messaging</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="view_profile.php">Profile</a>
-                </li>
-                <li class="nav-item mt-auto">
-                    <a class="nav-link" href="logout.php">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
    <div class="sidebar-lg d-none d-lg-block">
         <div class="d-flex justify-content-between align-items-center px-3 mb-3">
             <h5 class="m-0 text-white">SDU Admin</h5>
             <button id="sidebar-toggle" class="btn btn-toggle"><i class="fas fa-bars"></i></button>
         </div>
-        
-        
         
         <ul class="nav flex-column">
             <li class="nav-item">
@@ -494,7 +466,6 @@ $active_programs = 0;
                                 <h2 class="mb-1">Total Attendance</h2>
                                 <p class="text-muted small mb-0">Completed trainings across the last 6 months</p>
                             </div>
-                            <span class="badge bg-primary">Live</span>
                         </div>
                         <canvas id="attendanceChart" height="160"></canvas>
                     </div>
