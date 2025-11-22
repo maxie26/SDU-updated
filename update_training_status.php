@@ -10,9 +10,10 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['staff', 'head
 $user_id = $_SESSION['user_id'];
 $training_id = $_GET['id'] ?? null;
 $new_status = $_GET['status'] ?? null;
+$redirect_url = $_SESSION['role'] === 'head' ? 'office_head_dashboard.php?view=training-records' : 'staff_dashboard.php?view=training-records';
 
 if (!$training_id || !$new_status || !in_array($new_status, ['completed', 'upcoming'])) {
-    header("Location: staff_dashboard.php?view=training-records");
+    header("Location: " . $redirect_url);
     exit();
 }
 
@@ -23,7 +24,7 @@ $stmt_check->execute();
 $result_check = $stmt_check->get_result();
 
 if ($result_check->num_rows === 0) {
-    header("Location: staff_dashboard.php?view=training-records");
+    header("Location: " . $redirect_url);
     exit();
 }
 $stmt_check->close();
@@ -33,6 +34,6 @@ $stmt_update->bind_param("sii", $new_status, $training_id, $user_id);
 $stmt_update->execute();
 $stmt_update->close();
 
-header("Location: staff_dashboard.php?view=training-records");
+header("Location: " . $redirect_url);
 exit();
 ?>

@@ -331,7 +331,39 @@ if ($view === 'training-records') {
             border-radius: 10px;
             transition: width 0.3s ease;
         }
+
+        .table thead th {
+            background: #020381;
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            border: none;
+        }
+
+         /* Training records action buttons */
+         .table .btn-sm {
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
         
+        .table .btn-sm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .table .btn-sm i {
+            font-size: 0.8rem;
+        }
+        
+        .table td .d-flex {
+            align-items: center;
+        }
+
+    
         /* Center modals both horizontally and vertically */
         .modal-dialog {
             display: flex;

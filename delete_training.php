@@ -10,8 +10,10 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['staff', 'head
 $user_id = $_SESSION['user_id'];
 $training_id = $_GET['id'] ?? null;
 
+$redirect_url = $_SESSION['role'] === 'head' ? 'office_head_dashboard.php?view=training-records' : 'staff_dashboard.php?view=training-records';
+
 if (!$training_id) {
-    header("Location: staff_dashboard.php?view=training-records");
+    header("Location: " . $redirect_url);
     exit();
 }
 
@@ -21,7 +23,7 @@ $stmt_check->execute();
 $result_check = $stmt_check->get_result();
 
 if ($result_check->num_rows === 0) {
-    header("Location: staff_dashboard.php?view=training-records");
+    header("Location: " . $redirect_url);
     exit();
 }
 
@@ -54,11 +56,11 @@ try {
     }
 
     $conn->commit();
-    header("Location: staff_dashboard.php?view=training-records&message=deleted");
+    header("Location: " . $redirect_url . "&message=deleted");
     exit();
 } catch (Exception $e) {
     $conn->rollback();
-    header("Location: staff_dashboard.php?view=training-records&message=error");
+    header("Location: " . $redirect_url . "&message=error");
     exit();
 }
 ?>

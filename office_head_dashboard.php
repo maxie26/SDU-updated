@@ -26,6 +26,10 @@ $stmt_office->close();
 $total_staff_in_office = 0;
 $completed_trainings_in_office = 0;
 
+// Office head's own training statistics
+$head_trainings_completed = 0;
+$head_trainings_upcoming = 0;
+
 if (!empty($office)) {
     $stmt_count_staff = $conn->prepare("SELECT COUNT(*) AS total FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.role = 'staff' AND s.office = ?");
     $stmt_count_staff->bind_param("s", $office);
@@ -46,6 +50,77 @@ if (!empty($office)) {
         $completed_trainings_in_office = (int)$row['total'];
     }
     $stmt_completed->close();
+}
+
+// Get office head's own completed trainings count
+$query_head_completed = "SELECT COUNT(*) AS total FROM user_trainings WHERE user_id = ? AND status = 'completed'";
+$stmt_head_completed = $conn->prepare($query_head_completed);
+$stmt_head_completed->bind_param("i", $head_user_id);
+$stmt_head_completed->execute();
+$result_head_completed = $stmt_head_completed->get_result();
+if ($result_head_completed) {
+    $row = $result_head_completed->fetch_assoc();
+    $head_trainings_completed = (int)$row['total'];
+}
+$stmt_head_completed->close();
+
+// Get office head's own upcoming trainings count
+$query_head_upcoming = "SELECT COUNT(*) AS total FROM user_trainings WHERE user_id = ? AND status = 'upcoming'";
+$stmt_head_upcoming = $conn->prepare($query_head_upcoming);
+$stmt_head_upcoming->bind_param("i", $head_user_id);
+$stmt_head_upcoming->execute();
+$result_head_upcoming = $stmt_head_upcoming->get_result();
+if ($result_head_upcoming) {
+    $row = $result_head_upcoming->fetch_assoc();
+    $head_trainings_upcoming = (int)$row['total'];
+}
+$stmt_head_upcoming->close();
+
+// Recent activities for office head
+$query_head_activities = "SELECT t.title, ut.completion_date, ut.status, ut.created_at FROM user_trainings ut 
+                          JOIN trainings t ON ut.training_id = t.id 
+                          WHERE ut.user_id = ? 
+                          ORDER BY ut.created_at DESC LIMIT 5";
+$stmt_head_activities = $conn->prepare($query_head_activities);
+$stmt_head_activities->bind_param("i", $head_user_id);
+$stmt_head_activities->execute();
+$result_head_activities = $stmt_head_activities->get_result();
+
+// Upcoming trainings for office head
+$query_head_upcoming_list = "SELECT t.title, ut.completion_date FROM user_trainings ut 
+                            JOIN trainings t ON ut.training_id = t.id 
+                            WHERE ut.user_id = ? AND ut.status = 'upcoming' 
+                            ORDER BY ut.completion_date ASC LIMIT 3";
+$stmt_head_upcoming_list = $conn->prepare($query_head_upcoming_list);
+$stmt_head_upcoming_list->bind_param("i", $head_user_id);
+$stmt_head_upcoming_list->execute();
+$result_head_upcoming_list = $stmt_head_upcoming_list->get_result();
+
+// Training records view
+if ($view === 'training-records') {
+    $query_records = "
+        SELECT ut.id, t.title, t.description, ut.completion_date, ut.status
+        FROM user_trainings ut
+        LEFT JOIN trainings t ON ut.training_id = t.id
+        WHERE ut.user_id = ?
+        ORDER BY ut.completion_date DESC
+    ";
+    $stmt_records = $conn->prepare($query_records);
+    $stmt_records->bind_param('i', $head_user_id);
+    $stmt_records->execute();
+    $result_records = $stmt_records->get_result();
+}
+
+$message = "";
+if (isset($_GET['message'])) {
+    switch ($_GET['message']) {
+        case 'deleted':
+            $message = "<div class='alert alert-success'>Training record deleted successfully!</div>";
+            break;
+        case 'error':
+            $message = "<div class='alert alert-danger'>Error deleting training record!</div>";
+            break;
+    }
 }
 ?>
 
@@ -72,7 +147,7 @@ if (!empty($office)) {
         .sidebar {
             width: 250px;
             background-color: #1a237e;
-            color: white;
+            color: #ffffff;
             height: 100vh;
             position: fixed;
             padding-top: 2rem;
@@ -168,18 +243,78 @@ if (!empty($office)) {
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .card:nth-child(1) { 
+            --card-color: #10b981;
+            --card-color-light: #6ee7b7;
+        }
+        .card:nth-child(2) { 
+            --card-color: #f59e0b;
+            --card-color-light: #fbbf24;
+        }
+        .card:nth-child(3) { 
             --card-color: #6366f1;
             --card-color-light: #a5b4fc;
         }
-        .card:nth-child(2) { 
-            --card-color: #10b981;
-            --card-color-light: #6ee7b7;
+        .card:nth-child(4) { 
+            --card-color: #8b5cf6;
+            --card-color-light: #c4b5fd;
         }
 
         /* Buttons consistency */
         .btn-primary,
         .btn-info,
         .btn-success { border-radius: 10px; padding: .6rem 1rem; font-weight: 600; }
+        
+        /* Training records action buttons */
+        .table .btn-sm {
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        
+        .table .btn-sm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .table .btn-sm i {
+            font-size: 0.8rem;
+        }
+        
+        .table td .d-flex {
+            align-items: center;
+        }
+        
+        /* Training records table improvements */
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .table thead th {
+            background: #020381;
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            border: none;
+        }
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        .table-striped tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .table-striped tbody tr:hover {
+            background-color: #f1f5f9;
+            transition: background-color 0.2s ease;
+        }
+        .table .badge {
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
 
         /* Center modals */
         .modal-dialog { display: flex; align-items: center; min-height: calc(100vh - 1rem); }
@@ -253,6 +388,11 @@ if (!empty($office)) {
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= $view === 'training-records' ? 'active' : '' ?>" href="?view=training-records">
+                    <i class="fas fa-book-open me-2"></i> <span>Training Records</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?= $view === 'office-directory' ? 'active' : '' ?>" href="?view=office-directory">
                     <i class="fas fa-users me-2"></i> <span>Office Staff Directory</span>
                 </a>
@@ -282,6 +422,10 @@ if (!empty($office)) {
                         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
                             <i class="fas fa-user-circle me-2"></i> Profile
                         </button>
+                        <button class="btn btn-primary position-relative" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                            <i class="fas fa-bell me-2"></i> Notifications
+                            <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;"></span>
+                        </button>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#headBroadcastModal">
                             <i class="fas fa-paper-plane me-2"></i> Notify My Staff
                         </button>
@@ -289,6 +433,14 @@ if (!empty($office)) {
                 </div>
             </div>
             <div class="stats-cards">
+                <div class="card">
+                    <h3>My Completed Trainings</h3>
+                    <p><?php echo $head_trainings_completed; ?></p>
+                </div>
+                <div class="card">
+                    <h3>My Upcoming Trainings</h3>
+                    <p><?php echo $head_trainings_upcoming; ?></p>
+                </div>
                 <div class="card">
                     <h3>Staff in Your Office</h3>
                     <p><?php echo $total_staff_in_office; ?></p>
@@ -325,12 +477,124 @@ if (!empty($office)) {
                     </div>
                 </div>
             </div>
+            <?php if ($result_head_upcoming_list && $result_head_upcoming_list->num_rows > 0): ?>
+            <div class="content-box mt-4">
+                <h2>My Upcoming Trainings</h2>
+                <div class="list-group">
+                    <?php while ($upcoming = $result_head_upcoming_list->fetch_assoc()): ?>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1"><?php echo htmlspecialchars($upcoming['title']); ?></h6>
+                                <small class="text-muted">Scheduled for <?php echo date('M d, Y', strtotime($upcoming['completion_date'])); ?></small>
+                            </div>
+                            <span class="badge bg-warning rounded-pill">Upcoming</span>
+                        </div>
+                    <?php endwhile; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div class="content-box mt-4">
+                <h2>My Recent Activity</h2>
+            <?php if ($result_head_activities && $result_head_activities->num_rows > 0): ?>
+                    <div class="list-group">
+                        <?php while ($activity = $result_head_activities->fetch_assoc()): ?>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><?php echo htmlspecialchars($activity['title']); ?></h6>
+                                    <small class="text-muted">
+                                        <?php if ($activity['status'] === 'completed'): ?>
+                                            Completed on <?php echo date('M d, Y', strtotime($activity['completion_date'])); ?>
+                                        <?php else: ?>
+                                            Added on <?php echo date('M d, Y', strtotime($activity['created_at'])); ?> - Scheduled for <?php echo date('M d, Y', strtotime($activity['completion_date'])); ?>
+                                        <?php endif; ?>
+                                    </small>
+                                </div>
+                                <span class="badge <?php echo $activity['status'] === 'completed' ? 'bg-success' : 'bg-warning'; ?> rounded-pill">
+                                    <?php echo ucfirst($activity['status']); ?>
+                                </span>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Training Activities Yet</h5>
+                        <p class="text-muted">Start by adding your first training record!</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrainingModal">
+                            <i class="fas fa-plus-circle me-1"></i> Add Your First Training
+                        </button>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+        <?php elseif ($view === 'training-records'): ?>
             <div class="content-box">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Your Actions</h2>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrainingModal"><i class="fas fa-plus-circle me-1"></i> Add Training</button>
+                    <h2>My Training Records</h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrainingModal">
+                        <i class="fas fa-plus-circle me-1"></i> Add Training
+                    </button>
                 </div>
-                <p>Use the Office Staff Directory to view and review trainings of staff in your office.</p>
+                <?php echo $message; ?>
+                <?php if ($result_records && $result_records->num_rows > 0): ?>
+                    <table class="table table-striped mt-4">
+                        <thead>
+                            <tr>
+                                <th scope="col">Training Title</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $result_records->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($row['title']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['description']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['completion_date']); ?></td>
+                                    <td>
+                                        <span class="badge <?php echo $row['status'] === 'completed' ? 'bg-success' : 'bg-warning'; ?>">
+                                            <?php echo ucfirst($row['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <?php if ($row['status'] === 'upcoming'): ?>
+                                                <a href="update_training_status.php?id=<?php echo $row['id']; ?>&status=completed" 
+                                                   class="btn btn-success btn-sm" 
+                                                   onclick="return confirm('Mark this training as completed?')"
+                                                   title="Mark as completed">
+                                                    <i class="fas fa-check me-1"></i> Complete
+                                                </a>
+                                            <?php endif; ?>
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editTrainingModal"
+                                                data-training-id="<?php echo $row['id']; ?>"
+                                                data-title="<?php echo htmlspecialchars($row['title']); ?>"
+                                                data-description="<?php echo htmlspecialchars($row['description']); ?>"
+                                                data-date="<?php echo htmlspecialchars($row['completion_date']); ?>"
+                                                data-status="<?php echo htmlspecialchars($row['status']); ?>"
+                                                title="Edit training">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <a href="delete_training.php?id=<?php echo $row['id']; ?>" 
+                                               class="btn btn-danger btn-sm" 
+                                               onclick="return confirm('Are you sure you want to delete this training record?')"
+                                               title="Delete training">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="alert alert-info mt-4" role="alert">
+                        You have not added any trainings yet. <a href="#" data-bs-toggle="modal" data-bs-target="#addTrainingModal">Add your first training</a>.
+                    </div>
+                <?php endif; ?>
             </div>
         <?php elseif ($view === 'office-directory'): ?>
             <div class="content-box">
@@ -575,6 +839,42 @@ if (!empty($office)) {
                     })
                     .catch(() => { document.getElementById('addTrainingFeedback').innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
             });
+
+            // Initialize edit training modal
+            const editModal = document.getElementById('editTrainingModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    const form = document.getElementById('editTrainingForm');
+                    form.elements['id'].value = button.getAttribute('data-training-id');
+                    form.elements['title'].value = button.getAttribute('data-title');
+                    form.elements['description'].value = button.getAttribute('data-description') || '';
+                    form.elements['completion_date'].value = button.getAttribute('data-date');
+                    form.elements['status'].value = button.getAttribute('data-status');
+                });
+            }
+
+            // Initialize edit training form submission
+            const editForm = document.getElementById('editTrainingForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    const fd = new FormData(editForm);
+                    fetch('training_api.php?action=update', { method: 'POST', body: fd, credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(data => {
+                            const fb = document.getElementById('editTrainingFeedback');
+                            if (data.success) {
+                                fb.innerHTML = '<div class="alert alert-success">Training updated!</div>';
+                                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('editTrainingModal')).hide(); window.location.reload(); }, 800);
+                            } else {
+                                fb.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed') + '</div>';
+                            }
+                        })
+                        .catch(() => { document.getElementById('editTrainingFeedback').innerHTML = '<div class="alert alert-danger">Request failed</div>'; });
+                });
+            }
         }
     </script>
 
@@ -659,6 +959,67 @@ if (!empty($office)) {
         </div>
     </div>
 
+    <!-- Edit Training Modal -->
+    <div class="modal fade" id="editTrainingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Training</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editTrainingForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" />
+                        <div class="mb-3">
+                            <label class="form-label">Training Title</label>
+                            <input type="text" name="title" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="completion_date" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="completed">Completed</option>
+                                <option value="upcoming">Upcoming</option>
+                            </select>
+                        </div>
+                        <div id="editTrainingFeedback"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-bell me-2"></i>Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="notificationsContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php include 'profile_modal.php'; ?>
 
     <script>
@@ -666,6 +1027,159 @@ if (!empty($office)) {
         if (typeof initProfileModal === 'function') {
             initProfileModal('view');
         }
+
+        // Load notifications modal
+        const notificationsModal = document.getElementById('notificationsModal');
+        if (notificationsModal) {
+            notificationsModal.addEventListener('show.bs.modal', function () {
+                const container = document.getElementById('notificationsContent');
+                container.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+                fetch('notifications_api.php', { credentials: 'same-origin' })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Insert HTML
+                        container.innerHTML = html;
+                        // Execute any scripts inside the loaded HTML (innerHTML doesn't run scripts)
+                        try {
+                            const scripts = container.querySelectorAll('script');
+                            scripts.forEach(s => {
+                                const newScript = document.createElement('script');
+                                if (s.src) {
+                                    newScript.src = s.src;
+                                    newScript.async = false;
+                                } else {
+                                    newScript.textContent = s.textContent;
+                                }
+                                document.body.appendChild(newScript);
+                                document.body.removeChild(newScript);
+                            });
+                        } catch (e) {
+                            console.error('Error executing notification scripts:', e);
+                        }
+                        // Also initialize handlers directly on the inserted content to be reliable
+                        try {
+                            initInsertedNotificationHandlers(container);
+                        } catch (e) {
+                            console.error('Failed to init inserted notification handlers:', e);
+                        }
+                    })
+                    .catch(() => {
+                        container.innerHTML = '<div class="alert alert-danger">Unable to load notifications.</div>';
+                    });
+            });
+        }
+
+        // Called after notifications content is injected to attach event handlers
+        function initInsertedNotificationHandlers(container) {
+            if (!container) return;
+            // per-item mark buttons
+            container.addEventListener('click', function(e) {
+                const btn = e.target.closest('.mark-read-btn');
+                if (btn) {
+                    const id = btn.getAttribute('data-id');
+                    if (!id) return;
+                    btn.disabled = true;
+                    fetch('mark_read.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: [id] }),
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('inserted mark_read response', data);
+                        if (data && data.success) {
+                            const item = container.querySelector(`[data-id="${id}"]`);
+                            if (item) {
+                                item.classList.remove('unread');
+                                const actionBtn = item.querySelector('.mark-read-btn');
+                                if (actionBtn) actionBtn.remove();
+                            }
+                            // update unread counts
+                            if (typeof updateUnreadCount === 'function') updateUnreadCount();
+                        } else {
+                            console.error('Failed to mark read', data);
+                            btn.disabled = false;
+                        }
+                    })
+                    .catch(err => { console.error(err); btn.disabled = false; });
+                }
+
+                const allBtn = e.target.closest('#markAllReadBtn');
+                if (allBtn) {
+                    allBtn.disabled = true;
+                    const unreadEls = Array.from(container.querySelectorAll('.list-group-item.unread'));
+                    const ids = unreadEls.map(el => el.getAttribute('data-id')).filter(Boolean);
+                    if (ids.length === 0) { allBtn.disabled = false; return; }
+                    fetch('mark_read.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids }),
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('inserted mark_all response', data);
+                        if (data && data.success) {
+                            unreadEls.forEach(item => {
+                                item.classList.remove('unread');
+                                const actionBtn = item.querySelector('.mark-read-btn');
+                                if (actionBtn) actionBtn.remove();
+                            });
+                            if (typeof updateUnreadCount === 'function') updateUnreadCount();
+                        } else {
+                            console.error('Failed to mark all read', data);
+                        }
+                        allBtn.disabled = false;
+                    })
+                    .catch(err => { console.error(err); allBtn.disabled = false; });
+                }
+                // Delete all button inside inserted container
+                const delBtn = e.target.closest('#deleteAllBtn');
+                if (delBtn) {
+                    delBtn.disabled = true;
+                    // select all items inside the inserted container (read + unread)
+                    const allEls = Array.from(container.querySelectorAll('.list-group-item'));
+                    const ids = allEls.map(el => el.getAttribute('data-id')).filter(Boolean);
+                    if (ids.length === 0) { delBtn.disabled = false; return; }
+                    fetch('delete_notifications.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids }),
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('inserted delete_all response', data);
+                        if (data && data.success) {
+                            allEls.forEach(item => item.remove());
+                            if (typeof updateUnreadCount === 'function') updateUnreadCount();
+                        } else {
+                            console.error('Failed to delete all', data);
+                        }
+                        delBtn.disabled = false;
+                    })
+                    .catch(err => { console.error(err); delBtn.disabled = false; });
+                }
+            });
+        }
+
+        // Update unread count on office head dashboard
+        async function updateUnreadCount() {
+            const res = await fetch('get_unread_count.php');
+            const j = await res.json();
+            const badge = document.getElementById('notificationBadge');
+            if (j.count > 0) {
+                if (badge) {
+                    badge.textContent = j.count;
+                    badge.style.display = 'block';
+                }
+            } else {
+                if (badge) badge.style.display = 'none';
+            }
+        }
+        updateUnreadCount();
+        setInterval(updateUnreadCount, 5000);
     </script>
 </body>
 </html>
