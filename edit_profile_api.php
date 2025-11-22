@@ -32,6 +32,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
     }
     
     $position = isset($_POST['position']) ? trim($_POST['position']) : '';
+    $program = isset($_POST['program']) ? trim($_POST['program']) : '';
     $job_function = isset($_POST['job_function']) ? trim($_POST['job_function']) : '';
     $office = isset($_POST['office']) ? trim($_POST['office']) : '';
     $new_password = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
@@ -61,15 +62,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
             $result_check = $stmt_check->get_result();
 
             if ($result_check->num_rows > 0) {
-                $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, job_function = ?, office = ? WHERE user_id = ?");
-                $stmt_details->bind_param("sssi", $position, $job_function, $office, $user_id);
+                $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, program = ?, job_function = ?, office = ? WHERE user_id = ?");
+                $stmt_details->bind_param("ssssi", $position, $program, $job_function, $office, $user_id);
                 if (!$stmt_details->execute()) {
                     throw new Exception("Error updating staff details: " . $stmt_details->error);
                 }
                 $stmt_details->close();
             } else {
-                $stmt_details = $conn->prepare("INSERT INTO staff_details (user_id, position, job_function, office) VALUES (?, ?, ?, ?)");
-                $stmt_details->bind_param("isss", $user_id, $position, $job_function, $office);
+                $stmt_details = $conn->prepare("INSERT INTO staff_details (user_id, position, program, job_function, office) VALUES (?, ?, ?, ?, ?)");
+                $stmt_details->bind_param("issss", $user_id, $position, $program, $job_function, $office);
                 if (!$stmt_details->execute()) {
                     throw new Exception("Error inserting staff details: " . $stmt_details->error);
                 }
@@ -87,7 +88,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
     exit();
 }
 
-$stmt_fetch = $conn->prepare("SELECT u.email, s.position, s.job_function, s.office FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.id = ?");
+$stmt_fetch = $conn->prepare("SELECT u.email, s.position, s.program, s.job_function, s.office FROM users u LEFT JOIN staff_details s ON u.id = s.user_id WHERE u.id = ?");
 $stmt_fetch->bind_param("i", $user_id);
 $stmt_fetch->execute();
 $result_fetch = $stmt_fetch->get_result();
@@ -101,6 +102,7 @@ if (!$user_data) {
 
 $user_data['email'] = $user_data['email'] ?? '';
 $user_data['position'] = $user_data['position'] ?? '';
+$user_data['program'] = $user_data['program'] ?? '';
 $user_data['job_function'] = $user_data['job_function'] ?? '';
 $user_data['office'] = $user_data['office'] ?? '';
 ?>

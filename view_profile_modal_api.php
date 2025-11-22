@@ -148,6 +148,10 @@ $stmt_upcoming->close();
                 <div class="info-chip"><?php echo $user_data['position'] ? htmlspecialchars($user_data['position']) : 'Not specified'; ?></div>
             </div>
             <div class="mb-3">
+                <label class="text-uppercase text-muted small mb-1">Program</label>
+                <div class="info-chip"><?php echo $user_data['program'] ? htmlspecialchars($user_data['program']) : 'Not specified'; ?></div>
+            </div>
+            <div class="mb-3">
                 <label class="text-uppercase text-muted small mb-1">Job Function</label>
                 <div class="info-chip"><?php echo $user_data['job_function'] ? htmlspecialchars($user_data['job_function']) : 'Not specified'; ?></div>
             </div>
@@ -190,25 +194,29 @@ $stmt_upcoming->close();
                 </div>
                 <?php if ($role !== 'admin'): ?>
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Position</label>
-                        <input type="text" class="form-control" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>">
+                    <div class="col-md-4">
+                        <label class="form-label">Position <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>" required>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Job Function</label>
-                        <input type="text" class="form-control" name="job_function" value="<?php echo htmlspecialchars($user_data['job_function']); ?>">
+                    <div class="col-md-4">
+                        <label class="form-label">Program <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="program" value="<?php echo htmlspecialchars($user_data['program']); ?>"required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Job Function <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="job_function" value="<?php echo htmlspecialchars($user_data['job_function']); ?>" required>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <label class="form-label">Office</label>
-                    <select class="form-select" name="office" id="modal_office">
-                        <option value="">Select Office</option>
+                    <label class="form-label">Office <span class="text-danger">*</span></label>
+                    <select class="form-select" name="office" id="modal_office" required>
+                        <option value="">Select Office </option>
                     </select>
                 </div>
                 <?php endif; ?>
                 <div class="mt-3">
-                    <label class="form-label">New Password</label>
-                    <input type="password" class="form-control" name="new_password" placeholder="Leave blank to keep current password">
+                    <label class="form-label">New Password <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" name="new_password" placeholder="Leave blank to keep current password" required>
                     <small class="text-muted">Use a strong passphrase with at least 8 characters.</small>
                 </div>
                 <div id="profileFeedback" class="mt-3"></div>
@@ -230,6 +238,7 @@ $stmt_upcoming->close();
 const originalFormValues = {
     email: '<?php echo htmlspecialchars($user_data['email'], ENT_QUOTES); ?>',
     position: '<?php echo htmlspecialchars($user_data['position'] ?? '', ENT_QUOTES); ?>',
+    program: '<?php echo htmlspecialchars($user_data['program'] ?? '', ENT_QUOTES); ?>',
     job_function: '<?php echo htmlspecialchars($user_data['job_function'] ?? '', ENT_QUOTES); ?>',
     office: '<?php echo htmlspecialchars($user_data['office'] ?? '', ENT_QUOTES); ?>',
     new_password: ''
@@ -323,12 +332,14 @@ const originalFormValues = {
         resetBtn.addEventListener('click', function() {
             const emailInput = form.querySelector('input[name="email"]');
             const positionInput = form.querySelector('input[name="position"]');
+                    const programInput = form.querySelector('input[name="program"]');
             const jobFunctionInput = form.querySelector('input[name="job_function"]');
             const officeSelect = form.querySelector('select[name="office"]');
             const passwordInput = form.querySelector('input[name="new_password"]');
             
             if (emailInput) emailInput.value = originalFormValues.email;
             if (positionInput) positionInput.value = originalFormValues.position;
+            if (programInput) programInput.value = originalFormValues.program;
             if (jobFunctionInput) jobFunctionInput.value = originalFormValues.job_function;
             if (officeSelect) {
                 // Set the office value

@@ -807,7 +807,31 @@ if ($view === 'training-records') {
                 fetch('notifications_api.php', { credentials: 'same-origin' })
                     .then(response => response.text())
                     .then(html => {
+                        // Insert HTML
                         container.innerHTML = html;
+                        // Execute any scripts inside the loaded HTML (innerHTML doesn't run scripts)
+                        try {
+                            const scripts = container.querySelectorAll('script');
+                            scripts.forEach(s => {
+                                const newScript = document.createElement('script');
+                                if (s.src) {
+                                    newScript.src = s.src;
+                                    newScript.async = false;
+                                } else {
+                                    newScript.textContent = s.textContent;
+                                }
+                                document.body.appendChild(newScript);
+                                document.body.removeChild(newScript);
+                            });
+                        } catch (e) {
+                            console.error('Error executing notification scripts:', e);
+                        }
+                        // Also initialize handlers directly on the inserted content to be reliable
+                        try {
+                            initInsertedNotificationHandlers(container);
+                        } catch (e) {
+                            console.error('Failed to init inserted notification handlers:', e);
+                        }
                     })
                     .catch(() => {
                         container.innerHTML = '<div class="alert alert-danger">Unable to load notifications.</div>';
@@ -818,6 +842,101 @@ if ($view === 'training-records') {
         // Initialize profile modal
         if (typeof initProfileModal === 'function') {
             initProfileModal('view');
+        }
+        
+        // Called after notifications content is injected to attach event handlers
+        function initInsertedNotificationHandlers(container) {
+            if (!container) return;
+            // per-item mark buttons
+            container.addEventListener('click', function(e) {
+                const btn = e.target.closest('.mark-read-btn');
+                if (btn) {
+                    const id = btn.getAttribute('data-id');
+                    if (!id) return;
+                    btn.disabled = true;
+                    fetch('mark_read.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: [id] }),
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('inserted mark_read response', data);
+                        if (data && data.success) {
+                            const item = container.querySelector(`[data-id="${id}"]`);
+                            if (item) {
+                                item.classList.remove('unread');
+                                const actionBtn = item.querySelector('.mark-read-btn');
+                                if (actionBtn) actionBtn.remove();
+                            }
+                            // update unread counts
+                            if (typeof updateUnreadCount === 'function') updateUnreadCount();
+                        } else {
+                            console.error('Failed to mark read', data);
+                            btn.disabled = false;
+                        }
+                    })
+                    .catch(err => { console.error(err); btn.disabled = false; });
+                }
+
+                const allBtn = e.target.closest('#markAllReadBtn');
+                if (allBtn) {
+                    allBtn.disabled = true;
+                    const unreadEls = Array.from(container.querySelectorAll('.list-group-item.unread'));
+                    const ids = unreadEls.map(el => el.getAttribute('data-id')).filter(Boolean);
+                    if (ids.length === 0) { allBtn.disabled = false; return; }
+                    fetch('mark_read.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids }),
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('inserted mark_all response', data);
+                        if (data && data.success) {
+                            unreadEls.forEach(item => {
+                                item.classList.remove('unread');
+                                const actionBtn = item.querySelector('.mark-read-btn');
+                                if (actionBtn) actionBtn.remove();
+                            });
+                            if (typeof updateUnreadCount === 'function') updateUnreadCount();
+                        } else {
+                            console.error('Failed to mark all read', data);
+                        }
+                        allBtn.disabled = false;
+                    })
+                    .catch(err => { console.error(err); allBtn.disabled = false; });
+                }
+                // Delete all button inside inserted container
+                const delBtn = e.target.closest('#deleteAllBtn');
+                if (delBtn) {
+                    delBtn.disabled = true;
+                    // select all items inside the inserted container (read + unread)
+                    const allEls = Array.from(container.querySelectorAll('.list-group-item'));
+                    const ids = allEls.map(el => el.getAttribute('data-id')).filter(Boolean);
+                    if (ids.length === 0) { delBtn.disabled = false; return; }
+                    fetch('delete_notifications.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids }),
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('inserted delete_all response', data);
+                        if (data && data.success) {
+                            allEls.forEach(item => item.remove());
+                            if (typeof updateUnreadCount === 'function') updateUnreadCount();
+                        } else {
+                            console.error('Failed to delete all', data);
+                        }
+                        delBtn.disabled = false;
+                    })
+                    .catch(err => { console.error(err); delBtn.disabled = false; });
+                }
+            });
         }
     </script>
 

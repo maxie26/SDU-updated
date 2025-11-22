@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 $ids = null;
-// Support both form-posted arrays (ids[]) and raw JSON payloads
+// accept form posted ids[] or JSON { ids: [] }
 if (isset($_POST['ids'])) {
     $ids = $_POST['ids'];
 } else {
@@ -30,7 +30,6 @@ if (!$ids || !is_array($ids)) {
     exit;
 }
 
-// Filter to integers and remove empties
 $ids = array_filter(array_map('intval', $ids));
 if (empty($ids)) {
     http_response_code(400);
@@ -38,9 +37,8 @@ if (empty($ids)) {
     exit;
 }
 
-// Build placeholders for prepared statement
 $placeholders = implode(',', array_fill(0, count($ids), '?'));
-$sql = "UPDATE messages SET is_read = 1 WHERE id IN ($placeholders) AND receiver_id = ?";
+$sql = "DELETE FROM messages WHERE id IN ($placeholders) AND receiver_id = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
     http_response_code(500);
@@ -55,8 +53,6 @@ $bind_params[] = & $types;
 foreach ($params as $key => $val) {
     $bind_params[] = & $params[$key];
 }
-
-// Use call_user_func_array to bind dynamic params
 call_user_func_array([$stmt, 'bind_param'], $bind_params);
 
 if ($stmt->execute()) {

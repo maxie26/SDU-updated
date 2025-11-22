@@ -25,7 +25,7 @@ $main_query = "
         u.username,
         u.role,
         s.position,
-        /* program removed */
+        s.program,
         s.job_function,
         s.office,
         GROUP_CONCAT(CONCAT(t.title, ' (', ut.completion_date, ')') SEPARATOR ';<br>') AS trainings
@@ -294,9 +294,10 @@ if (!empty($selected_offices)) {
                     <tr>
                         <th>Username</th>
                         <th>Role</th>
-                        <th>Position</th>
-                        <th>Job Function</th>
-                        <th>Office</th>
+                            <th>Position</th>
+                            <th>PROGRAM</th>
+                            <th>Job Function</th>
+                            <th>Office</th>
                         <th>Trainings & Completion Dates</th>
                     </tr>
                 </thead>
@@ -307,6 +308,7 @@ if (!empty($selected_offices)) {
                                 <td><?php echo htmlspecialchars($row['username']); ?></td>
                                 <td><?php echo htmlspecialchars(ucfirst($row['role'])); ?></td>
                                 <td><?php echo htmlspecialchars($row['position'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($row['program'] ?? 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($row['job_function'] ?? 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($row['office'] ?? 'N/A'); ?></td>
                                 <td><?php echo $row['trainings'] ? $row['trainings'] : 'No trainings recorded.'; ?></td>
@@ -314,7 +316,7 @@ if (!empty($selected_offices)) {
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" class="text-center">No staff members found for this filter.</td>
+                            <td colspan="7" class="text-center">No staff members found for this filter.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

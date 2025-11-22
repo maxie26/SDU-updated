@@ -60,7 +60,7 @@ $result = $conn->query($query);
                         <th>Username</th>
                         <th>Email</th>
                         <th>Position</th>
-                        <th>Program</th>
+                        <th>PROGRAM</th>
                         <th>Job Function</th>
                         <th>Office</th>
                         <th>Actions</th>

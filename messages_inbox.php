@@ -113,7 +113,8 @@ function esc($s) {
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1200px; }
         .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
-        .unread { background-color: #e7f3ff; font-weight: 600; border-left: 4px solid #667eea; }
+        .unread { background: linear-gradient(90deg,#eef6ff,#f7fbff); font-weight: 600; border-left: 4px solid #6366f1; }
+        .mark-read-btn-inbox { min-width:36px; }
         .message-item { cursor: pointer; transition: background 0.2s; }
         .conversation-msg { margin-bottom: 10px; padding: 10px; border-radius: 5px; }
         .msg-sender { background-color: #e7f3ff; text-align: left; }
@@ -133,7 +134,11 @@ function esc($s) {
                 <div class="card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-bell"></i> Notifications</h5>
-                    <small class="text-white">Admins & office heads</small>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-primary me-2" id="markAllReadBtnInbox"><i class="fas fa-check-double"></i> Mark All Read</button>
+                        <button type="button" class="btn btn-sm btn-danger me-2" id="deleteAllBtnInbox"><i class="fas fa-trash"></i> Delete All</button>
+                        <small class="text-white">Admins & office heads</small>
+                    </div>
                 </div>
                 <div class="card-body p-2">
                     <form method="post" id="notifForm">
@@ -147,19 +152,26 @@ function esc($s) {
                             <?php else: ?>
                                 <?php foreach ($notifications as $n): ?>
                                     <?php $isUnread = intval($n['is_read']) === 0; ?>
-                                    <li class="list-group-item d-flex justify-content-between align-items-start p-2 <?php echo $isUnread ? 'unread' : ''; ?>">
-                                        <div style="flex:1">
-                                            <label style="display:block;">
-                                                <input type="checkbox" name="ids[]" value="<?php echo intval($n['id']); ?>"> 
-                                                <a href="?view=<?php echo intval($n['id']); ?>" class="text-decoration-none ms-2 <?php echo $isUnread ? 'fw-bold' : ''; ?>">
-                                                    <?php echo esc($n['sender_name']); ?>
-                                                    <?php if (!empty($n['sender_role'])): ?>
-                                                        <span class="badge bg-secondary ms-1 text-uppercase"><?php echo esc($n['sender_role']); ?></span>
-                                                    <?php endif; ?>
-                                                    — <?php echo esc(substr($n['message'], 0, 80)); ?><?php echo (strlen($n['message'])>80)?'...':''; ?>
-                                                </a>
-                                            </label>
-                                            <p class="mb-0 small text-muted"><?php echo date('M j, Y H:i', strtotime($n['created_at'])); ?></p>
+                                    <li class="list-group-item d-flex gap-3 align-items-start p-2 <?php echo $isUnread ? 'unread' : ''; ?>" data-id="<?php echo intval($n['id']); ?>">
+                                        <div>
+                                            <input type="checkbox" name="ids[]" value="<?php echo intval($n['id']); ?>">
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <a href="?view=<?php echo intval($n['id']); ?>" class="text-decoration-none <?php echo $isUnread ? 'fw-bold' : ''; ?>">
+                                                <?php echo esc($n['sender_name']); ?>
+                                                <?php if (!empty($n['sender_role'])): ?>
+                                                    <span class="badge bg-secondary ms-1 text-uppercase"><?php echo esc($n['sender_role']); ?></span>
+                                                <?php endif; ?>
+                                                — <?php echo esc(substr($n['message'], 0, 80)); ?><?php echo (strlen($n['message'])>80)?'...':''; ?>
+                                            </a>
+                                            <div class="small text-muted mt-1"><?php echo date('M j, Y H:i', strtotime($n['created_at'])); ?></div>
+                                        </div>
+                                        <div>
+                                            <?php if ($isUnread): ?>
+                                                <button type="button" class="btn btn-sm btn-success mark-read-btn-inbox" data-id="<?php echo intval($n['id']); ?>" title="Mark as read"><i class="fas fa-check"></i></button>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Read</span>
+                                            <?php endif; ?>
                                         </div>
                                     </li>
                                 <?php endforeach; ?>
@@ -174,5 +186,125 @@ function esc($s) {
     </div>
 </div>
 
+<script>
+// Inbox: delegated handler for single mark-read and mark-all via AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('notifForm');
+    if (!container) return;
+
+    container.addEventListener('click', function(e) {
+        const btn = e.target.closest('.mark-read-btn-inbox');
+        if (btn) {
+            console.log('inbox delegated mark-read clicked', btn.getAttribute('data-id'));
+            const id = btn.getAttribute('data-id');
+            if (!id) return;
+            btn.disabled = true;
+            fetch('mark_read.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] }),
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log('inbox mark_read response', data);
+                if (data && data.success) {
+                    const item = container.querySelector('li[data-id="' + id + '"]');
+                    if (item) {
+                        item.classList.remove('unread');
+                        const action = item.querySelector('.mark-read-btn-inbox');
+                        if (action) action.remove();
+                    }
+                    // update unread badge
+                    fetch('get_unread_count.php').then(r => r.json()).then(d => {
+                        const badge = document.getElementById('unreadBadge');
+                        if (badge) {
+                            badge.textContent = d.count || 0;
+                            badge.style.display = (d.count>0)?'inline-block':'none';
+                        }
+                    }).catch(()=>{});
+                } else {
+                    console.error('Failed to mark read', data);
+                    btn.disabled = false;
+                }
+            }).catch(err => { console.error(err); btn.disabled = false; });
+        }
+    });
+
+    const markAllBtn = document.getElementById('markAllReadBtnInbox');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function() {
+            console.log('inbox markAll clicked');
+            const unreadEls = Array.from(container.querySelectorAll('li.list-group-item.unread'));
+            const ids = unreadEls.map(el => el.getAttribute('data-id')).filter(Boolean);
+            if (ids.length === 0) return;
+            this.disabled = true;
+            fetch('mark_read.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids }),
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log('inbox mark_all response', data);
+                if (data && data.success) {
+                    unreadEls.forEach(item => {
+                        item.classList.remove('unread');
+                        const action = item.querySelector('.mark-read-btn-inbox');
+                        if (action) action.remove();
+                    });
+                    // Update unread badge
+                    fetch('get_unread_count.php').then(r => r.json()).then(d => {
+                        const badge = document.getElementById('unreadBadge');
+                        if (badge) {
+                            badge.textContent = d.count || 0;
+                            badge.style.display = (d.count>0)?'inline-block':'none';
+                        }
+                    }).catch(()=>{});
+                } else {
+                    console.error('Failed to mark all read', data);
+                }
+                markAllBtn.disabled = false;
+            }).catch(err => { console.error(err); markAllBtn.disabled = false; });
+        });
+    }
+    const deleteAllBtn = document.getElementById('deleteAllBtnInbox');
+    if (deleteAllBtn) {
+        deleteAllBtn.addEventListener('click', function() {
+            console.log('inbox deleteAll clicked');
+            // delete all notifications (include read ones)
+            const allEls = Array.from(container.querySelectorAll('li.list-group-item'));
+            const ids = allEls.map(el => el.getAttribute('data-id')).filter(Boolean);
+            if (ids.length === 0) return;
+            this.disabled = true;
+            fetch('delete_notifications.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids }),
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log('inbox delete_all response', data);
+                if (data && data.success) {
+                    allEls.forEach(item => item.remove());
+                    // Update unread badge
+                    fetch('get_unread_count.php').then(r => r.json()).then(d => {
+                        const badge = document.getElementById('unreadBadge');
+                        if (badge) {
+                            badge.textContent = d.count || 0;
+                            badge.style.display = (d.count>0)?'inline-block':'none';
+                        }
+                    }).catch(()=>{});
+                } else {
+                    console.error('Failed to delete all', data);
+                }
+                deleteAllBtn.disabled = false;
+            }).catch(err => { console.error(err); deleteAllBtn.disabled = false; });
+        });
+    }
+});
+</script>
 </body>
 </html>

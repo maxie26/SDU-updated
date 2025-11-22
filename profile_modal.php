@@ -88,19 +88,41 @@ function initProfileModal(mode = 'view') {
     
     // Only attach listener once
     if (!profileModalInitialized) {
-        modal.addEventListener('show.bs.modal', function() {
+            modal.addEventListener('show.bs.modal', function() {
             title.textContent = 'Profile Center';
             footer.innerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>';
             content.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
-            
+
             // Load the original UI design
             fetch('view_profile_modal_api.php', { credentials: 'same-origin' })
                 .then(r => r.text())
-                .then(html => { 
-                    content.innerHTML = html; 
+                .then(html => {
+                    // Insert the returned HTML into the modal
+                    content.innerHTML = html;
+
+                    // Execute any inline or external scripts contained in the loaded HTML
+                    // (inserting via innerHTML doesn't run scripts by default)
+                    try {
+                        const scripts = content.querySelectorAll('script');
+                        scripts.forEach(s => {
+                            const newScript = document.createElement('script');
+                            if (s.src) {
+                                newScript.src = s.src;
+                                // preserve execution order
+                                newScript.async = false;
+                            } else {
+                                newScript.textContent = s.textContent;
+                            }
+                            document.body.appendChild(newScript);
+                            document.body.removeChild(newScript);
+                        });
+                    } catch (e) {
+                        // If script execution fails, log for debugging but keep UI functional
+                        console.error('Error executing modal scripts:', e);
+                    }
                 })
-                .catch(() => { 
-                    content.innerHTML = '<div class="alert alert-danger">Failed to load profile</div>'; 
+                .catch(() => {
+                    content.innerHTML = '<div class="alert alert-danger">Failed to load profile</div>';
                 });
         });
         profileModalInitialized = true;
