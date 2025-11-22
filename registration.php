@@ -102,7 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         display: flex;
         justify-content: center;
         align-items: flex-start;  
-        padding: 20px;
+        padding: 40px;
+        background-color: #fff; /* make right panel white to match login */
     }
 
     .registration-left {
@@ -116,6 +117,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         padding: 20px;
     }
 
+    /* make the white right panel look like the login card */
+    .registration-form-box {
+        width: 100%;
+        max-width: 420px;
+        margin-bottom: 20px;
+        background: #fff;
+        border-radius: 8px;
+        padding: 30px 30px 20px 30px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
     .registration-left h1 {
         font-size: 3rem;
         font-weight: 700;
@@ -124,11 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         padding-left: 20px;
     }
     
-    .registration-form-box {
-        width: 100%;
-        max-width: 400px;
-        margin-bottom: 20px;  
-    }
+    
 
     .registration-form-box h2 {
         font-size: 1.8rem;
