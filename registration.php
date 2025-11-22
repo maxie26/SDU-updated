@@ -87,23 +87,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     .registration-container {
-        display: flex;
-        flex-direction: row-reverse; 
         width: 100%;
         max-width: 1000px;
-        height: 100vh;
-        max-height: 600px;
+        display: flex;
+        flex-direction: row-reverse;
         border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
     }
 
     .registration-right {
-        background-color: white;
         flex: 1;
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;  
         padding: 20px;
     }
 
@@ -129,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     .registration-form-box {
         width: 100%;
         max-width: 400px;
+        margin-bottom: 20px;  
     }
 
     .registration-form-box h2 {

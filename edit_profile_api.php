@@ -62,6 +62,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'save') {
             $result_check = $stmt_check->get_result();
 
             if ($result_check->num_rows > 0) {
+                
                 $stmt_details = $conn->prepare("UPDATE staff_details SET position = ?, program = ?, job_function = ?, office = ? WHERE user_id = ?");
                 $stmt_details->bind_param("ssssi", $position, $program, $job_function, $office, $user_id);
                 if (!$stmt_details->execute()) {
@@ -120,6 +121,10 @@ $user_data['office'] = $user_data['office'] ?? '';
             <input type="text" class="form-control" id="modal_position" name="position" value="<?php echo htmlspecialchars($user_data['position']); ?>">
         </div>
         <div class="mb-3">
+            <label for="modal_program" class="form-label">Program</label>
+            <input type="text" class="form-control" id="modal_program" name="program" value="<?php echo htmlspecialchars($user_data['program']); ?>">
+        </div>
+        <div class="mb-3">
             <label for="modal_job_function" class="form-label">Job Function</label>
             <input type="text" class="form-control" id="modal_job_function" name="job_function" value="<?php echo htmlspecialchars($user_data['job_function']); ?>">
         </div>
@@ -170,38 +175,55 @@ $user_data['office'] = $user_data['office'] ?? '';
 </script>
 
 <script>
-
-    // Handle form submission
+// Handle form submission (save button or form submit fallback)
+(() => {
     const profileForm = document.getElementById('profileForm');
     const saveBtn = document.getElementById('saveProfileBtn');
-    
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function() {
-            const formData = new FormData(profileForm);
-            const feedback = document.getElementById('editProfileFeedback');
-            
-            fetch('edit_profile_api.php?action=save', {
+    const feedback = document.getElementById('editProfileFeedback');
+
+    async function submitProfile() {
+        if (!profileForm) return;
+        const formData = new FormData(profileForm);
+        try {
+            const res = await fetch('edit_profile_api.php?action=save', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
-                    setTimeout(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
-                        if (modal) modal.hide();
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
-                }
-            })
-            .catch(error => {
-                feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>';
             });
+            const data = await res.json();
+            if (data.success) {
+                if (feedback) feedback.innerHTML = '<div class="alert alert-success">Profile updated successfully!</div>';
+                setTimeout(() => {
+                    const modalEl = document.getElementById('profileModal');
+                    if (typeof bootstrap !== 'undefined' && modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        if (modal) modal.hide();
+                    }
+                    window.location.reload();
+                }, 1200);
+            } else {
+                if (feedback) feedback.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Failed to update profile') + '</div>';
+            }
+        } catch (err) {
+            if (feedback) feedback.innerHTML = '<div class="alert alert-danger">Request failed</div>';
+            console.error('Profile update error:', err);
+        }
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            submitProfile();
         });
     }
-});
+
+    // Fallback: handle form submit (e.g., Enter key)
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitProfile();
+        });
+    }
+})();
+
 </script>

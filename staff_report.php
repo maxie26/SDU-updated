@@ -222,7 +222,7 @@ if (!empty($selected_offices)) {
         <?php endif; ?>
         
         <h2 class="text-center mb-4 text-dark fw-bold">Staff/Head Directory & Bi-Yearly Report</h2>
-        <p class="text-center text-muted mb-4">Filter and view staff information with training records</p>
+        <p class="text-center text-muted mb-4">Training Records</p>
         
         <form class="row gy-2 gx-3 align-items-center mb-3" method="get" action="staff_report.php" id="filtersForm">
             <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
