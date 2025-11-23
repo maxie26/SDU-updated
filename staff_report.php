@@ -136,20 +136,74 @@ if (!empty($selected_offices)) {
         }
         .table {
             margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            background-color: #fff;
         }
         .table thead th {
-            background-color: #f8f9fa;
-            color: #495057;
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: #ffffff;
             font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 0.75rem;
+            border: none;
+            border-bottom: 3px solid #0d47a1;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
         }
-        .table tbody tr:hover,
-        .table-hover tbody tr:hover,
-        .table-striped tbody tr:hover {
-            background-color: transparent !important;
+        .table thead th:first-child {
+            border-top-left-radius: 8px;
+        }
+        .table thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+        .table tbody td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+            color: #374151;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            max-width: 200px;
+        }
+        .table tbody td:last-child {
+            max-width: 400px;
+            line-height: 1.6;
+        }
+        .table tbody tr {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .table tbody tr:hover {
+            background-color: #f3f4f6 !important;
+            border-left-color: #6366f1;
+            transform: scale(1.001);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #fafafa;
         }
         .table tbody tr:nth-child(even):hover {
-            background-color: transparent !important;
+            background-color: #f3f4f6 !important;
+        }
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+        }
+        .table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+        }
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .badge {
             border-radius: 8px;
@@ -180,6 +234,14 @@ if (!empty($selected_offices)) {
             .table-responsive {
                 font-size: 0.85rem;
             }
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            .table tbody td:last-child {
+                max-width: 250px;
+            }
             
             .btn-group {
                 flex-direction: column;
@@ -199,6 +261,14 @@ if (!empty($selected_offices)) {
             
             .table-responsive {
                 font-size: 0.75rem;
+            }
+            .table thead th,
+            .table tbody td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.75rem;
+            }
+            .table tbody td:last-child {
+                max-width: 200px;
             }
             
             .dropdown-menu {
@@ -328,6 +398,22 @@ if (!empty($selected_offices)) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+    // Check library loading
+    window.addEventListener('load', function() {
+        console.log('Window loaded, checking libraries...');
+        console.log('window.jspdf:', typeof window.jspdf);
+        console.log('window.jsPDF:', typeof window.jsPDF);
+        
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            console.error('jsPDF library not loaded! Check network tab for failed requests.');
+            console.log('Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('pdf')));
+        } else {
+            console.log('jsPDF library loaded successfully');
+        }
+    });
+</script>
 <script>
     (function(){
         const form = document.getElementById('filtersForm');
@@ -380,6 +466,7 @@ if (!empty($selected_offices)) {
         const printBtn = document.getElementById('printReport');
         const exportMenu = document.querySelectorAll('[data-export]');
 
+        // PRINT
         if (printBtn && table) {
             printBtn.addEventListener('click', function(){
                 const printWindow = window.open('', '', 'width=1200,height=900');
@@ -389,7 +476,15 @@ if (!empty($selected_offices)) {
                 doc.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">');
                 doc.write('</head><body class="p-4">');
                 doc.write('<h3>Directory & Reports</h3>');
-                doc.write(table.outerHTML);
+               
+                // Clone table
+                const tableClone = table.cloneNode(true);
+                // Clean HTML in trainings column (replace <br> with newlines for display)
+                tableClone.querySelectorAll('tbody td:last-child').forEach(cell => {
+                    cell.innerHTML = cell.innerHTML.replace(/<br\s*\/?>/gi, '<br>');
+                });
+
+                doc.write(tableClone.outerHTML);
                 doc.write('</body></html>');
                 doc.close();
                 printWindow.focus();
@@ -397,37 +492,97 @@ if (!empty($selected_offices)) {
             });
         }
 
+        // EXPORT TO CSV
         function exportToCSV() {
             if (!table) return;
-            const rows = Array.from(table.querySelectorAll('tr'));
+
+            const rows = Array.from(table.querySelectorAll("tr"));
+
             const csv = rows.map(row => {
-                return Array.from(row.querySelectorAll('th,td'))
-                    .map(cell => `"${cell.innerText.replace(/"/g, '""')}"`)
-                    .join(',');
-            }).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
+                return Array.from(row.querySelectorAll("th,td"))
+                    .map(cell => {
+                        let text = cell.innerHTML.replace(/<br\s*\/?>/gi, " | ").trim();
+                        text = text.replace(/"/g, '""'); 
+                        return `"${text}"`;
+                    })
+                    .join(",");
+            }).join("\n");
+
+            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+            const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = 'directory-report.csv';
-            document.body.appendChild(link);
+            link.download = "staff-directory-" + new Date().toISOString().split("T")[0] + ".csv";
             link.click();
-            document.body.removeChild(link);
         }
 
+        // EXPORT TO PDF
         function exportToPDF() {
-            if (!table || !window.jspdf || !window.jspdf.jsPDF) return;
-            const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-            doc.setFontSize(16);
-            doc.text('Directory & Reports', 40, 40);
-            doc.autoTable({
-                html: '#directoryTable',
-                startY: 60,
-                styles: { fontSize: 8, cellPadding: 4 },
-                headStyles: { fillColor: [26, 35, 126] }
-            });
-            doc.save('directory-report.pdf');
-        }
+    if (!table || !window.jspdf || !window.jspdf.jsPDF) {
+        alert("jsPDF failed to load.");
+        return;
+    }
 
+    try {
+        // Create jsPDF instance
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "pt",
+            format: "a4"
+        });
+
+        // Clone table
+        const clone = table.cloneNode(true);
+
+        // Replace <br> tags inside training column
+        clone.querySelectorAll("td:last-child").forEach(td => {
+            td.innerHTML = td.innerHTML.replace(/<br\s*\/?>/gi, " | ");
+        });
+
+        // Insert temporarily to DOM so autoTable can read it
+        clone.id = "exportCloneTable";
+        clone.style.position = "absolute";
+        clone.style.left = "-9999px";
+        document.body.appendChild(clone);
+
+        // Header
+        doc.setFontSize(16);
+        doc.text("Staff/Head Directory & Bi-Yearly Report - Training Records", 40, 40);
+        doc.setFontSize(12);
+        doc.text("Generated: " + new Date().toLocaleDateString(), 40, 60);
+
+        // AutoTable
+        window.jspdf.autoTable(doc, {
+            html: "#exportCloneTable",
+            startY: 80,
+            styles: {
+                fontSize: 7,
+                cellPadding: 3,
+                overflow: "linebreak"
+            },
+            headStyles: {
+                fillColor: [26, 35, 126],
+                textColor: [255, 255, 255],
+                fontStyle: "bold"
+            },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            margin: { top: 80, left: 40, right: 40 }
+        });
+
+        // Remove cloned table
+        document.body.removeChild(clone);
+
+        // Save PDF
+        doc.save("staff-directory-" + new Date().toISOString().split("T")[0] + ".pdf");
+
+    } catch (err) {
+        console.error(err);
+        alert("PDF Export Error: " + err.message);
+    }
+}
+
+
+        // BUTTON HANDLERS
         exportMenu.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.getAttribute('data-export');

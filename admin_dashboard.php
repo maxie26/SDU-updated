@@ -470,18 +470,15 @@ $active_programs = 0;
                         <canvas id="attendanceChart" height="160"></canvas>
                     </div>
                 </div>
-                <div class="col-xl-3">
+                <div class="col-xl-6">
                     <div class="content-box h-100">
-                        <h2 class="mb-3">Participation</h2>
-                        <canvas id="participationChart" height="220"></canvas>
-                        <p class="text-center text-muted small mt-3">Active members vs overall staff</p>
-                    </div>
-                </div>
-                <div class="col-xl-3">
-                    <div class="content-box h-100">
-                        <h2 class="mb-3">Number of Heads</h2>
-                        <canvas id="headsChart" height="220"></canvas>
-                        <p class="text-center text-muted small mt-3">Distribution per office</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="mb-1">Heads & Staff by Office</h2>
+                                <p class="text-muted small mb-0">Distribution of heads and staff per office</p>
+                            </div>
+                        </div>
+                        <canvas id="headsChart" height="300"></canvas>
                     </div>
                 </div>
             </div>
@@ -568,6 +565,52 @@ $active_programs = 0;
                     .then(html => {
                         directoryContent.innerHTML = html;
                         attachDirectoryHandlers();
+                        
+                        // Extract and execute scripts from loaded content
+                        const scripts = directoryContent.querySelectorAll('script');
+                        const scriptPromises = [];
+                        scripts.forEach(oldScript => {
+                            const newScript = document.createElement('script');
+                            if (oldScript.src) {
+                                newScript.src = oldScript.src;
+                                const promise = new Promise((resolve, reject) => {
+                                    newScript.onload = resolve;
+                                    newScript.onerror = reject;
+                                });
+                                scriptPromises.push(promise);
+                            } else {
+                                newScript.textContent = oldScript.textContent;
+                            }
+                            document.body.appendChild(newScript);
+                            oldScript.remove();
+                        });
+                        
+                        // Wait for all scripts to load, then trigger initialization
+                        Promise.all(scriptPromises).then(() => {
+                            // Give a small delay for scripts to initialize
+                            setTimeout(() => {
+                                // Try to trigger any initialization functions if they exist
+                                if (typeof initExportPrint === 'function') {
+                                    initExportPrint();
+                                }
+                            }, 100);
+                        }).catch(() => {
+                            // Even if some scripts fail, try to initialize
+                            setTimeout(() => {
+                                if (typeof initExportPrint === 'function') {
+                                    initExportPrint();
+                                }
+                            }, 100);
+                        });
+                        
+                        // For inline scripts, execute immediately
+                        if (scriptPromises.length === 0) {
+                            setTimeout(() => {
+                                if (typeof initExportPrint === 'function') {
+                                    initExportPrint();
+                                }
+                            }, 100);
+                        }
                     })
                     .catch(() => { directoryContent.innerHTML = '<div class="alert alert-danger">Failed to load Directory & Reports</div>'; });
             }
@@ -596,7 +639,7 @@ $active_programs = 0;
             }
         });
 
-        let attendanceChartInstance, participationChartInstance, headsChartInstance;
+        let attendanceChartInstance, headsChartInstance;
 
         function initAdminCharts() {
             fetch('dashboard_metrics_api.php?scope=admin', { credentials: 'same-origin' })
@@ -604,11 +647,10 @@ $active_programs = 0;
                 .then(resp => {
                     if (!resp.success) throw new Error('Failed to load metrics');
                     renderAttendance(resp.data.attendance);
-                    renderParticipation(resp.data.participation);
                     renderHeads(resp.data.heads);
                 })
                 .catch(() => {
-                    const placeholders = ['attendanceChart','participationChart','headsChart'];
+                    const placeholders = ['attendanceChart','headsChart'];
                     placeholders.forEach(id => {
                         const canvas = document.getElementById(id);
                         if (canvas) {
@@ -650,59 +692,146 @@ $active_programs = 0;
             });
         }
 
-        function renderParticipation(data) {
-            const ctx = document.getElementById('participationChart');
-            if (!ctx) return;
-            if (participationChartInstance) participationChartInstance.destroy();
-            const inactive = Math.max(data.total - data.active, 0);
-            participationChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Active', 'Not yet engaged'],
-                    datasets: [{
-                        data: [data.active, inactive],
-                        backgroundColor: ['#22c55e', '#e2e8f0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '70%',
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-
         function renderHeads(data) {
             const ctx = document.getElementById('headsChart');
             if (!ctx) return;
             if (headsChartInstance) headsChartInstance.destroy();
-            const offices = Array.isArray(data?.byOffice) ? data.byOffice.slice(0, 6) : [];
+            const offices = Array.isArray(data?.byOffice) ? data.byOffice : [];
             if (!offices.length) {
                 const context = ctx.getContext('2d');
                 context.clearRect(0, 0, ctx.width, ctx.height);
                 context.font = '14px Inter';
                 context.fillStyle = '#94a3b8';
                 context.textAlign = 'center';
-                context.fillText('No headcount data yet', ctx.width / 2, ctx.height / 2);
+                context.fillText('No data available', ctx.width / 2, ctx.height / 2);
                 return;
             }
+            
+            // Sort by total (heads + staff) descending
+            const sortedOffices = [...offices].sort((a, b) => {
+                const totalA = (a.heads || 0) + (a.staff || 0);
+                const totalB = (b.heads || 0) + (b.staff || 0);
+                return totalB - totalA;
+            });
+            
             headsChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: offices.map(o => o.office),
-                    datasets: [{
-                        label: 'Heads',
-                        data: offices.map(o => o.total),
-                        backgroundColor: '#a855f7'
-                    }]
+                    labels: sortedOffices.map(o => o.office || 'Unassigned'),
+                    datasets: [
+                        {
+                            label: 'Heads',
+                            data: sortedOffices.map(o => o.heads || 0),
+                            backgroundColor: '#a855f7',
+                            borderColor: '#9333ea',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Staff',
+                            data: sortedOffices.map(o => o.staff || 0),
+                            backgroundColor: '#3b82f6',
+                            borderColor: '#2563eb',
+                            borderWidth: 1
+                        }
+                    ]
                 },
                 options: {
-                    indexAxis: 'y',
-                    plugins: { legend: { display: false } },
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.5,
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y || 0;
+                                    return label + ': ' + value;
+                                },
+                                footer: function(tooltipItems) {
+                                    let total = 0;
+                                    tooltipItems.forEach(item => {
+                                        total += item.parsed.y || 0;
+                                    });
+                                    return 'Total Personnel: ' + total;
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        x: { beginAtZero: true, ticks: { precision:0 } }
+                        x: {
+                            stacked: false,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                maxRotation: 45,
+                                minRotation: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Office',
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 0
+                                }
+                            }
+                        },
+                        y: { 
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: { 
+                                precision: 0,
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Personnel',
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                },
+                                padding: {
+                                    top: 0,
+                                    bottom: 10
+                                }
+                            }
+                        }
                     }
                 }
             });

@@ -130,7 +130,11 @@ if ($scope === 'admin') {
     );
     $headCount = fetchScalar($conn, "SELECT COUNT(*) FROM users WHERE role = 'head'");
 
+    // Get heads and staff counts per office
     $headsByOffice = [];
+    $staffByOffice = [];
+    
+    // Get heads per office
     $sqlHeads = "
         SELECT COALESCE(NULLIF(s.office, ''), 'Unassigned') AS office,
                COUNT(*) AS total
@@ -138,7 +142,7 @@ if ($scope === 'admin') {
         LEFT JOIN staff_details s ON u.id = s.user_id
         WHERE u.role = 'head'
         GROUP BY office
-        ORDER BY total DESC, office ASC";
+        ORDER BY office ASC";
     $resHeads = $conn->query($sqlHeads);
     if ($resHeads) {
         while ($row = $resHeads->fetch_assoc()) {
@@ -148,6 +152,65 @@ if ($scope === 'admin') {
             ];
         }
     }
+    
+    // Get staff per office
+    $sqlStaff = "
+        SELECT COALESCE(NULLIF(s.office, ''), 'Unassigned') AS office,
+               COUNT(*) AS total
+        FROM users u
+        LEFT JOIN staff_details s ON u.id = s.user_id
+        WHERE u.role = 'staff'
+        GROUP BY office
+        ORDER BY office ASC";
+    $resStaff = $conn->query($sqlStaff);
+    if ($resStaff) {
+        while ($row = $resStaff->fetch_assoc()) {
+            $staffByOffice[] = [
+                'office' => $row['office'],
+                'total' => (int)$row['total']
+            ];
+        }
+    }
+    
+    // Combine offices and create unified data structure
+    $allOffices = [];
+    $officeMap = [];
+    
+    // Add all offices from heads
+    foreach ($headsByOffice as $item) {
+        $office = $item['office'];
+        if (!isset($officeMap[$office])) {
+            $officeMap[$office] = ['office' => $office, 'heads' => 0, 'staff' => 0];
+            $allOffices[] = $office;
+        }
+        $officeMap[$office]['heads'] = $item['total'];
+    }
+    
+    // Add all offices from staff
+    foreach ($staffByOffice as $item) {
+        $office = $item['office'];
+        if (!isset($officeMap[$office])) {
+            $officeMap[$office] = ['office' => $office, 'heads' => 0, 'staff' => 0];
+            $allOffices[] = $office;
+        }
+        $officeMap[$office]['staff'] = $item['total'];
+    }
+    
+    // Convert to array format
+    $byOffice = [];
+    foreach ($allOffices as $office) {
+        $byOffice[] = $officeMap[$office];
+    }
+    
+    // Sort by total (heads + staff) descending
+    usort($byOffice, function($a, $b) {
+        $totalA = $a['heads'] + $a['staff'];
+        $totalB = $b['heads'] + $b['staff'];
+        if ($totalA === $totalB) {
+            return strcmp($a['office'], $b['office']);
+        }
+        return $totalB - $totalA;
+    });
 
     $payload = [
         'attendance' => $attendance,
@@ -157,7 +220,7 @@ if ($scope === 'admin') {
         ],
         'heads' => [
             'total' => $headCount,
-            'byOffice' => $headsByOffice
+            'byOffice' => $byOffice
         ]
     ];
 } elseif ($scope === 'head') {
