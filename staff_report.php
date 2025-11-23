@@ -364,10 +364,10 @@ if (!empty($selected_offices)) {
                     <tr>
                         <th>Username</th>
                         <th>Role</th>
-                            <th>Position</th>
-                            <th>PROGRAM</th>
-                            <th>Job Function</th>
-                            <th>Office</th>
+                        <th>Position</th>
+                        <th>Program</th>
+                        <th>Job Function</th>
+                        <th>Office</th>
                         <th>Trainings & Completion Dates</th>
                     </tr>
                 </thead>
@@ -654,5 +654,6 @@ if (!empty($selected_offices)) {
 </script>
 </body>
 </html>
+
 
 <!-- chore: update file to refresh latest commit message -->
