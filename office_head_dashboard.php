@@ -462,18 +462,17 @@ if (isset($_GET['message'])) {
                         <canvas id="headAttendanceChart" height="160"></canvas>
                     </div>
                 </div>
-                <div class="col-xl-3">
+                <div class="col-xl-6">
                     <div class="content-box h-100">
-                        <h2 class="mb-3">Participation</h2>
-                        <canvas id="headParticipationChart" height="220"></canvas>
-                        <p class="text-center text-muted small mt-3">Active vs total staff</p>
-                    </div>
-                </div>
-                <div class="col-xl-3">
-                    <div class="content-box h-100">
-                        <h2 class="mb-3">Staff per Office</h2>
-                        <canvas id="staffPerOfficeChart" height="220"></canvas>
-                        <p class="text-center text-muted small mt-3">Organization-wide snapshot</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h2 class="mb-1">Staff per Office</h2>
+                                <p class="text-muted small mb-0">Organization-wide snapshot</p>
+                            </div>
+                        </div>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="staffPerOfficeChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -670,7 +669,7 @@ if (isset($_GET['message'])) {
             initAddTrainingForm();
         });
 
-        let headAttendanceChart, headParticipationChart, staffPerOfficeChart;
+        let headAttendanceChart, staffPerOfficeChart;
 
         function initHeadCharts() {
             fetch('dashboard_metrics_api.php?scope=head', { credentials: 'same-origin' })
@@ -678,11 +677,10 @@ if (isset($_GET['message'])) {
                 .then(resp => {
                     if (!resp.success) throw new Error('Failed to load metrics');
                     renderHeadAttendance(resp.data.attendance);
-                    renderHeadParticipation(resp.data.participation);
                     renderStaffPerOffice(resp.data.staffPerOffice);
                 })
                 .catch(() => {
-                    ['headAttendanceChart','headParticipationChart','staffPerOfficeChart'].forEach(id => {
+                    ['headAttendanceChart','staffPerOfficeChart'].forEach(id => {
                         const canvas = document.getElementById(id);
                         if (!canvas) return;
                         const ctx = canvas.getContext('2d');
@@ -718,33 +716,11 @@ if (isset($_GET['message'])) {
             });
         }
 
-        function renderHeadParticipation(data) {
-            const ctx = document.getElementById('headParticipationChart');
-            if (!ctx) return;
-            if (headParticipationChart) headParticipationChart.destroy();
-            const inactive = Math.max((data.total || 0) - (data.active || 0), 0);
-            headParticipationChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Active', 'Not active'],
-                    datasets: [{
-                        data: [data.active || 0, inactive],
-                        backgroundColor: ['#22c55e', '#e2e8f0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '68%',
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-        }
-
         function renderStaffPerOffice(list) {
             const ctx = document.getElementById('staffPerOfficeChart');
             if (!ctx) return;
             if (staffPerOfficeChart) staffPerOfficeChart.destroy();
-            const limited = Array.isArray(list) ? list.slice(0, 6) : [];
+            const limited = Array.isArray(list) ? list.slice(0, 10) : [];
             if (!limited.length) {
                 const c = ctx.getContext('2d');
                 c.font = '14px Inter';
@@ -760,14 +736,44 @@ if (isset($_GET['message'])) {
                     datasets: [{
                         label: 'Staff count',
                         data: limited.map(item => item.total),
-                        backgroundColor: '#f97316'
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
-                    indexAxis: 'y',
-                    plugins: { legend: { display: false } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 10,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 }
+                        }
+                    },
                     scales: {
-                        x: { beginAtZero: true, ticks: { precision: 0 } }
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { 
+                                precision: 0,
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
                 }
             });

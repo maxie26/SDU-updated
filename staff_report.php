@@ -397,7 +397,7 @@ if (!empty($selected_offices)) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <script>
     // Check library loading
@@ -517,48 +517,91 @@ if (!empty($selected_offices)) {
 
         // EXPORT TO PDF
         function exportToPDF() {
-    if (!table || !window.jspdf || !window.jspdf.jsPDF) {
-        alert("jsPDF failed to load.");
+    if (!table) {
+        alert("Table not found.");
+        return;
+    }
+
+    // Check if jsPDF is available
+    if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+        alert("jsPDF library failed to load. Please refresh the page.");
         return;
     }
 
     try {
+        // Get current period selection
+        const periodSelect = document.getElementById('period');
+        const selectedPeriod = periodSelect ? periodSelect.value : '';
+        let periodLabel = 'All';
+        if (selectedPeriod === 'H1') {
+            periodLabel = '1st Half (Jan-Jun)';
+        } else if (selectedPeriod === 'H2') {
+            periodLabel = '2nd Half (Jul-Dec)';
+        }
+
+        // Get jsPDF - try both possible locations
+        let jsPDF;
+        if (window.jspdf && window.jspdf.jsPDF) {
+            jsPDF = window.jspdf.jsPDF;
+        } else if (window.jsPDF) {
+            jsPDF = window.jsPDF;
+        } else {
+            alert("jsPDF not found. Please refresh the page.");
+            return;
+        }
+
         // Create jsPDF instance
-        const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
             orientation: "landscape",
             unit: "pt",
             format: "a4"
         });
 
-        // Clone table
-        const clone = table.cloneNode(true);
-
-        // Replace <br> tags inside training column
-        clone.querySelectorAll("td:last-child").forEach(td => {
-            td.innerHTML = td.innerHTML.replace(/<br\s*\/?>/gi, " | ");
+        // Extract table data as arrays
+        const headers = [];
+        const rows = [];
+        
+        // Get headers
+        const headerRow = table.querySelector('thead tr');
+        if (headerRow) {
+            headerRow.querySelectorAll('th').forEach(th => {
+                headers.push(th.textContent.trim());
+            });
+        }
+        
+        // Get data rows
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const row = [];
+            tr.querySelectorAll('td').forEach(td => {
+                // Replace <br> tags with " | " for better PDF display
+                let text = td.innerHTML.replace(/<br\s*\/?>/gi, " | ");
+                // Remove any remaining HTML tags
+                text = text.replace(/<[^>]*>/g, '').trim();
+                row.push(text || 'N/A');
+            });
+            // Only add row if it's not the "No staff members found" message
+            if (row.length > 0 && !row[0].includes('No staff members found')) {
+                rows.push(row);
+            }
         });
-
-        // Insert temporarily to DOM so autoTable can read it
-        clone.id = "exportCloneTable";
-        clone.style.position = "absolute";
-        clone.style.left = "-9999px";
-        document.body.appendChild(clone);
 
         // Header
         doc.setFontSize(16);
         doc.text("Staff/Head Directory & Bi-Yearly Report - Training Records", 40, 40);
         doc.setFontSize(12);
-        doc.text("Generated: " + new Date().toLocaleDateString(), 40, 60);
+        doc.text("Period: " + periodLabel, 40, 60);
+        doc.text("Generated: " + new Date().toLocaleDateString(), 40, 75);
 
-        // AutoTable
-        window.jspdf.autoTable(doc, {
-            html: "#exportCloneTable",
-            startY: 80,
+        // AutoTable using data arrays (more reliable than HTML parsing)
+        const autoTableOptions = {
+            head: [headers],
+            body: rows,
+            startY: 95,
             styles: {
                 fontSize: 7,
                 cellPadding: 3,
-                overflow: "linebreak"
+                overflow: "linebreak",
+                cellWidth: "wrap"
             },
             headStyles: {
                 fillColor: [26, 35, 126],
@@ -566,14 +609,28 @@ if (!empty($selected_offices)) {
                 fontStyle: "bold"
             },
             alternateRowStyles: { fillColor: [245, 245, 245] },
-            margin: { top: 80, left: 40, right: 40 }
-        });
+            margin: { top: 95, left: 40, right: 40 },
+            columnStyles: {
+                6: { cellWidth: 200 } // Wider column for trainings
+            }
+        };
+        
+        // Try different ways to call autoTable
+        if (typeof doc.autoTable === 'function') {
+            doc.autoTable(autoTableOptions);
+        } else if (window.jspdf && typeof window.jspdf.autoTable === 'function') {
+            window.jspdf.autoTable(doc, autoTableOptions);
+        } else if (jsPDF && typeof jsPDF.autoTable === 'function') {
+            jsPDF.autoTable(doc, autoTableOptions);
+        } else if (typeof window.autoTable === 'function') {
+            window.autoTable(doc, autoTableOptions);
+        } else {
+            throw new Error("autoTable plugin not loaded. Please refresh the page and try again.");
+        }
 
-        // Remove cloned table
-        document.body.removeChild(clone);
-
-        // Save PDF
-        doc.save("staff-directory-" + new Date().toISOString().split("T")[0] + ".pdf");
+        // Save PDF with period in filename
+        const filename = "staff-directory-" + periodLabel.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-" + new Date().toISOString().split("T")[0] + ".pdf";
+        doc.save(filename);
 
     } catch (err) {
         console.error(err);

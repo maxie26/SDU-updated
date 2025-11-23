@@ -114,10 +114,24 @@ if ($view === 'training-records') {
             body.toggled .sidebar { width: 80px; }
             body.toggled .main-content { margin-left: 80px; }
             .sidebar .nav-link { transition: all 0.2s; white-space: nowrap; overflow: hidden; }
-            body.toggled .sidebar .nav-link { text-align: center; padding: 12px 0; }
-            body.toggled .sidebar .nav-link i { margin-right: 0; }
+            body.toggled .sidebar .nav-link { 
+                text-align: center; 
+                padding: 12px 0; 
+                margin: 5px 12px;
+                justify-content: center;
+                display: flex;
+                width: calc(100% - 24px);
+            }
+            body.toggled .sidebar .nav-link i { 
+                margin: 0;
+                display: block;
+            }
             body.toggled .sidebar .nav-link span { display: none; }
             body.toggled .sidebar h3 { display: none; }
+            body.toggled .sidebar .nav-link:hover,
+            body.toggled .sidebar .nav-link.active {
+                margin: 5px 12px;
+            }
         }
         .main-content {
             flex-grow: 1;
@@ -137,16 +151,21 @@ if ($view === 'training-records') {
         .sidebar .nav-link {
             color: white;
             padding: 12px 20px;
-            border-radius: 5px;
+            border-radius: 8px;
             margin: 5px 15px;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: flex-start;
             gap: 0.75rem;
+            text-decoration: none;
         }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link.active {
             background-color: #3f51b5;
+            font-weight: 600;
         }
         .content-box { 
             background: rgba(255, 255, 255, 0.95); 
@@ -395,7 +414,7 @@ if ($view === 'training-records') {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="edit_profile_api.php" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#profileModal" onclick="initProfileModal('view')">
                     <i class="fas fa-user-circle me-2"></i> <span>Profile</span>
                 </a>
             </li>
