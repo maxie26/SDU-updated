@@ -296,30 +296,33 @@ if (!empty($selected_offices)) {
         
         <form class="row gy-2 gx-3 align-items-center mb-3" method="get" action="staff_report.php" id="filtersForm">
             <?php if ($embed): ?><input type="hidden" name="embed" value="1"><?php endif; ?>
-            <div class="col-auto">
-                <label class="form-label mb-0" for="officesDropdown">Offices</label>
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="officesDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 200px;">
-                        <?php echo empty($selected_offices) ? 'All' : (count($selected_offices) . ' selected'); ?>
-                    </button>
-                    <ul class="dropdown-menu p-2" aria-labelledby="officesDropdown" style="max-height:240px; overflow:auto; min-width: 320px;">
-                        <li>
+            <div class="col-auto" style="position:relative;">
+                <label class="form-label mb-0" for="officesToggle">Offices</label>
+                <button class="btn btn-outline-secondary" type="button" id="officesToggle" aria-expanded="false" style="min-width:200px;">
+                    <span id="officesToggleLabel"><?php echo empty($selected_offices) ? 'All' : (count($selected_offices) . ' selected'); ?></span>
+                    <span class="ms-2"><i class="fas fa-caret-down"></i></span>
+                </button>
+
+                <div id="officesPanel" class="custom-offices-menu" style="display:none; position:absolute; top:56px; left:0; min-width:320px; max-height:260px; overflow:auto; background:#fff; border:1px solid #e5e7eb; box-shadow:0 8px 24px rgba(0,0,0,0.12); padding:8px; z-index:2500;">
+                    <ul class="list-group" style="border: none;">
+                        <li class="list-group-item border-0 p-1">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="office-all" <?php echo empty($selected_offices) ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="office-all">All Offices</label>
                             </div>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li class="list-group-item border-0 p-1"><hr class="dropdown-divider"></li>
                         <?php foreach ($offices as $idx => $off): $id = 'office-'.($idx+1); ?>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input office-check" type="checkbox" id="<?php echo $id; ?>" value="<?php echo htmlspecialchars($off); ?>" <?php echo in_array($off, $selected_offices) ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="<?php echo $id; ?>"><?php echo htmlspecialchars($off); ?></label>
-                            </div>
-                        </li>
+                            <li class="list-group-item border-0 p-1">
+                                <div class="form-check">
+                                    <input class="form-check-input office-check" type="checkbox" id="<?php echo $id; ?>" value="<?php echo htmlspecialchars($off); ?>" <?php echo in_array($off, $selected_offices) ? 'checked' : ''; ?>>
+                                    <label class="form-check-label" for="<?php echo $id; ?>"><?php echo htmlspecialchars($off); ?></label>
+                                </div>
+                            </li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
+
                 <div id="officesHidden"></div>
             </div>
             <div class="col-auto">
@@ -415,34 +418,64 @@ if (!empty($selected_offices)) {
     });
 </script>
 <script>
+    // No in-panel Apply button; external "Apply Filters" button will submit selected offices.
+</script>
+<script>
     (function(){
         const form = document.getElementById('filtersForm');
         const allBox = document.getElementById('office-all');
         const officeChecks = Array.from(document.querySelectorAll('.office-check'));
         const hiddenContainer = document.getElementById('officesHidden');
         const dropdownBtn = document.getElementById('officesDropdown');
+        const officesToggle = document.getElementById('officesToggle');
+        const officesPanel = document.getElementById('officesPanel');
+        const officesToggleLabel = document.getElementById('officesToggleLabel');
 
         function updateButtonLabel(){
             const checked = officeChecks.filter(c => c.checked).length;
-            dropdownBtn.textContent = checked === 0 ? 'All' : (checked + ' selected');
+            if (officesToggleLabel) officesToggleLabel.textContent = checked === 0 ? 'All' : (checked + ' selected');
+            if (dropdownBtn) dropdownBtn.textContent = checked === 0 ? 'All' : (checked + ' selected');
         }
 
         function syncAllState(){
             allBox.checked = officeChecks.every(c => !c.checked);
         }
 
-        allBox.addEventListener('change', function(){
-            if (allBox.checked) {
-                officeChecks.forEach(c => c.checked = false);
-                updateButtonLabel();
-            }
-        });
+        if (allBox) {
+            allBox.addEventListener('change', function(){
+                if (allBox.checked) {
+                    officeChecks.forEach(c => c.checked = false);
+                    updateButtonLabel();
+                }
+            });
+        }
 
         officeChecks.forEach(c => c.addEventListener('change', function(){
             if (this.checked) { allBox.checked = false; }
             syncAllState();
             updateButtonLabel();
         }));
+
+        // Toggle custom offices panel
+        if (officesToggle && officesPanel) {
+            officesToggle.addEventListener('click', function(e){
+                e.stopPropagation();
+                const isVisible = officesPanel.style.display === 'block';
+                officesPanel.style.display = isVisible ? 'none' : 'block';
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', function(ev){
+                if (!officesPanel.contains(ev.target) && ev.target !== officesToggle) {
+                    officesPanel.style.display = 'none';
+                }
+            });
+
+            // Prevent clicks inside panel from closing
+            officesPanel.addEventListener('click', function(ev){ ev.stopPropagation(); });
+        }
+
+        // No in-panel Apply button; users will click the external "Apply Filters" button to submit selections.
 
         form.addEventListener('submit', function(){
             hiddenContainer.innerHTML = '';
@@ -651,6 +684,10 @@ if (!empty($selected_offices)) {
             });
         });
     })();
+</script>
+<script>
+    // Prevent dropdown from closing when clicking checkboxes inside the offices dropdown
+    // old dropdown close-prevention removed: using a custom panel instead
 </script>
 </body>
 </html>
